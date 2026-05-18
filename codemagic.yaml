@@ -22,7 +22,6 @@ workflows:
 
       - name: Fetch signing files (certificate + profile)
         script: |
-          export CERTIFICATE_PRIVATE_KEY=$(openssl genrsa 2048 | openssl pkcs8 -topk8 -nocrypt)
           app-store-connect fetch-signing-files \
             com.tezyubor.app \
             --type IOS_APP_STORE \
