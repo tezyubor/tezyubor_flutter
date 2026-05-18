@@ -1,7 +1,16 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 /// Pushes [page] as a new route that slides in from the right.
+/// On iOS uses [CupertinoPageRoute] to enable the native edge swipe-back gesture.
 Future<T?> pushRightPanel<T>(BuildContext context, Widget page) {
+  if (Platform.isIOS) {
+    return Navigator.of(context).push<T>(
+      CupertinoPageRoute<T>(builder: (_) => page),
+    );
+  }
   return Navigator.of(context).push<T>(
     PageRouteBuilder<T>(
       pageBuilder: (_, __, ___) => page,
@@ -23,7 +32,8 @@ Future<T?> pushRightPanel<T>(BuildContext context, Widget page) {
 }
 
 /// Wraps [child] with an interactive swipe-left gesture that pops the route.
-/// Supports both slow (dragging) and fast swipes with visual feedback.
+/// On iOS this is a no-op — [CupertinoPageRoute] handles the gesture natively
+/// and a GestureDetector here would conflict with it.
 class SwipeToDismiss extends StatefulWidget {
   final Widget child;
   const SwipeToDismiss({super.key, required this.child});
@@ -89,6 +99,7 @@ class _SwipeToDismissState extends State<SwipeToDismiss>
 
   @override
   Widget build(BuildContext context) {
+    if (Platform.isIOS) return widget.child;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onHorizontalDragStart: _onDragStart,

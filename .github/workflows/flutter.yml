@@ -81,11 +81,11 @@ jobs:
 
       # ── 8. Сборка APK ───────────────────────────────
       - name: Build APK (release)
-        run: flutter build apk --release
+        run: flutter build apk --release --build-name="1.0.${{ github.run_number }}" --build-number=${{ github.run_number }}
 
       # ── 9. Сборка AAB ───────────────────────────────
       - name: Build AAB (release)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --build-name="1.0.${{ github.run_number }}" --build-number=${{ github.run_number }}
 
       # ── 10. Загрузить APK ───────────────────────────
       - name: Upload APK
