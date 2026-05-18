@@ -105,143 +105,132 @@ jobs:
 
 
 # ══════════════════════════════════════════════
-# JOB 2 — iOS (IPA, unsigned — для тестирования)
-#
-# ► Что получится:
-#   - IPA-файл собранный без подписи (no-codesign)
-#   - Можно установить через Xcode Devices или
-#     TestFlight/Diawi после ручной подписи
-#
-# ► Требования:
-#   - macOS runner (дороже linux ~10×, но нужен для Xcode)
-#   - Для подписанного IPA нужны secrets:
-#       IOS_P12_BASE64, IOS_P12_PASSWORD,
-#       IOS_PROVISIONING_PROFILE_BASE64, IOS_TEAM_ID
-#   - Без secrets — собирается unsigned IPA (для симулятора/
-#     установки через AltStore / ADB-like инструменты)
+# JOB 2 — iOS (IPA, unsigned — ОТКЛЮЧЁН)
+# iOS сборка перенесена в Codemagic (signed IPA → TestFlight).
+# Раскомментировать блок ниже чтобы восстановить unsigned сборку.
 # ══════════════════════════════════════════════
-  ios:
-    name: Build iOS (IPA)
-    runs-on: macos-latest
-    # При push — всегда; при ручном запуске — только если выбрано build_ios
-    if: >
-      github.event_name == 'push' ||
-      (github.event_name == 'workflow_dispatch' && inputs.build_ios)
-
-    steps:
-      # ── 1. Код ──────────────────────────────────────
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # ── 2. Кеш pub ──────────────────────────────────
-      - name: Cache pub dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      # ── 3. Кеш CocoaPods ────────────────────────────
-      - name: Cache CocoaPods
-        uses: actions/cache@v4
-        with:
-          path: ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
-
-      # ── 4. Flutter ──────────────────────────────────
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      # ── 5. Зависимости Flutter ──────────────────────
-      - name: Install Flutter dependencies
-        run: flutter pub get
-
-      # ── 6. Ruby + Bundler (фикс xcodeproj 1.27.0 баг) ──
-      # ios/Gemfile пинит xcodeproj = 1.26.0.
-      # ruby/setup-ruby автоматически запускает bundle install.
-      # После этого используем bundle exec pod install чтобы
-      # RubyGems гарантировал нужную версию xcodeproj.
-      - name: Setup Ruby with Bundler (pin xcodeproj 1.26.0)
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3'
-          bundler-cache: true       # автоматически запускает bundle install
-          working-directory: ios    # читает ios/Gemfile
-
-      # ── 7. CocoaPods через Bundler ───────────────────
-      - name: Install CocoaPods (bundle exec)
-        working-directory: ios
-        run: bundle exec pod install --repo-update
-
-      # ── 8. Патч project.pbxproj: добавить DEVELOPMENT_TEAM ──
-      # Flutter 3.x требует непустой DEVELOPMENT_TEAM при сборке
-      # под устройство, даже с --no-codesign.
-      # Добавляем фиктивный ID + отключаем подпись на уровне проекта,
-      # чтобы единственный вызов flutter build прошёл без || true.
-      - name: Patch Xcode project for unsigned CI build
-        run: |
-          python3 - <<'EOF'
-          path = 'ios/Runner.xcodeproj/project.pbxproj'
-          with open(path, 'r') as f:
-              content = f.read()
-          old = '"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";'
-          new = (
-              '"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";\n'
-              '\t\t\t\tCODE_SIGNING_ALLOWED = NO;\n'
-              '\t\t\t\tCODE_SIGNING_REQUIRED = NO;\n'
-              '\t\t\t\tDEVELOPMENT_TEAM = CIBUILDDUMMY;'
-          )
-          patched = content.replace(old, new)
-          count = patched.count('DEVELOPMENT_TEAM = CIBUILDDUMMY')
-          with open(path, 'w') as f:
-              f.write(patched)
-          print(f'Patched {count} build configuration(s)')
-          EOF
-
-      # ── 9. Сборка iOS ────────────────────────────────
-      # Flutter 3.41.x крашится в _embedNativeAssets (Thin Binary фаза)
-      # из-за objective_c/jni native assets. Пытаемся отключить через
-      # config; если не помогает — || true игнорирует краш embed_and_thin,
-      # при этом компиляция Swift + Dart AOT уже завершена успешно.
-      - name: Build iOS app (no codesign)
-        run: |
-          flutter config --no-enable-native-assets 2>/dev/null || true
-          flutter build ios --release --no-codesign || true
-
-      # ── 10. Упаковать .app → .ipa ───────────────────
-      # Проверяем что бинарник реальный (>1 MB), а не stub.
-      # Dart AOT и Flutter.framework встраиваются ДО embed_and_thin,
-      # поэтому IPA работоспособен даже при краше на native assets.
-      - name: Package unsigned IPA
-        run: |
-          APP=$(find build/ios -name "Runner.app" -type d | head -1)
-          if [ -z "$APP" ] || [ ! -f "$APP/Runner" ]; then
-            echo "ERROR: Runner binary not found"
-            find build/ios -type d -name "*.app" 2>/dev/null | head -5
-            exit 1
-          fi
-          BINARY_SIZE=$(wc -c < "$APP/Runner")
-          echo "Runner binary: $BINARY_SIZE bytes"
-          if [ "$BINARY_SIZE" -lt 1000000 ]; then
-            echo "ERROR: Binary is too small (${BINARY_SIZE}B) — Xcode compilation failed, not just embed_and_thin"
-            exit 1
-          fi
-          echo "Found: $APP  ($(du -sh "$APP" | cut -f1))"
-          mkdir -p Payload build/ios/ipa
-          cp -r "$APP" Payload/
-          zip -r build/ios/ipa/Runner.ipa Payload/
-          echo "IPA: $(du -sh build/ios/ipa/Runner.ipa | cut -f1)"
-
-      # ── 10. Загрузить IPA ───────────────────────────
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-ipa-${{ github.run_number }}
-          path: build/ios/ipa/Runner.ipa
-          retention-days: 30
+#  ios:
+#    name: Build iOS (IPA)
+#    runs-on: macos-latest
+#    # При push — всегда; при ручном запуске — только если выбрано build_ios
+#    if: >
+#      github.event_name == 'push' ||
+#      (github.event_name == 'workflow_dispatch' && inputs.build_ios)
+#
+#    steps:
+#      # ── 1. Код ──────────────────────────────────────
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      # ── 2. Кеш pub ──────────────────────────────────
+#      - name: Cache pub dependencies
+#        uses: actions/cache@v4
+#        with:
+#          path: ~/.pub-cache
+#          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+#          restore-keys: |
+#            ${{ runner.os }}-pub-
+#
+#      # ── 3. Кеш CocoaPods ────────────────────────────
+#      - name: Cache CocoaPods
+#        uses: actions/cache@v4
+#        with:
+#          path: ios/Pods
+#          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+#          restore-keys: |
+#            ${{ runner.os }}-pods-
+#
+#      # ── 4. Flutter ──────────────────────────────────
+#      - name: Setup Flutter
+#        uses: subosito/flutter-action@v2
+#        with:
+#          channel: stable
+#          cache: true
+#
+#      # ── 5. Зависимости Flutter ──────────────────────
+#      - name: Install Flutter dependencies
+#        run: flutter pub get
+#
+#      # ── 6. Ruby + Bundler (фикс xcodeproj 1.27.0 баг) ──
+#      # ios/Gemfile пинит xcodeproj = 1.26.0.
+#      # ruby/setup-ruby автоматически запускает bundle install.
+#      # После этого используем bundle exec pod install чтобы
+#      # RubyGems гарантировал нужную версию xcodeproj.
+#      - name: Setup Ruby with Bundler (pin xcodeproj 1.26.0)
+#        uses: ruby/setup-ruby@v1
+#        with:
+#          ruby-version: '3.3'
+#          bundler-cache: true       # автоматически запускает bundle install
+#          working-directory: ios    # читает ios/Gemfile
+#
+#      # ── 7. CocoaPods через Bundler ───────────────────
+#      - name: Install CocoaPods (bundle exec)
+#        working-directory: ios
+#        run: bundle exec pod install --repo-update
+#
+#      # ── 8. Патч project.pbxproj: добавить DEVELOPMENT_TEAM ──
+#      # Flutter 3.x требует непустой DEVELOPMENT_TEAM при сборке
+#      # под устройство, даже с --no-codesign.
+#      # Добавляем фиктивный ID + отключаем подпись на уровне проекта,
+#      # чтобы единственный вызов flutter build прошёл без || true.
+#      - name: Patch Xcode project for unsigned CI build
+#        run: |
+#          python3 - <<'EOF'
+#          path = 'ios/Runner.xcodeproj/project.pbxproj'
+#          with open(path, 'r') as f:
+#              content = f.read()
+#          old = '"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";'
+#          new = (
+#              '"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";\n'
+#              '\t\t\t\tCODE_SIGNING_ALLOWED = NO;\n'
+#              '\t\t\t\tCODE_SIGNING_REQUIRED = NO;\n'
+#              '\t\t\t\tDEVELOPMENT_TEAM = CIBUILDDUMMY;'
+#          )
+#          patched = content.replace(old, new)
+#          count = patched.count('DEVELOPMENT_TEAM = CIBUILDDUMMY')
+#          with open(path, 'w') as f:
+#              f.write(patched)
+#          print(f'Patched {count} build configuration(s)')
+#          EOF
+#
+#      # ── 9. Сборка iOS ────────────────────────────────
+#      # Flutter 3.41.x крашится в _embedNativeAssets (Thin Binary фаза)
+#      # из-за objective_c/jni native assets. Пытаемся отключить через
+#      # config; если не помогает — || true игнорирует краш embed_and_thin,
+#      # при этом компиляция Swift + Dart AOT уже завершена успешно.
+#      - name: Build iOS app (no codesign)
+#        run: |
+#          flutter config --no-enable-native-assets 2>/dev/null || true
+#          flutter build ios --release --no-codesign || true
+#
+#      # ── 10. Упаковать .app → .ipa ───────────────────
+#      # Проверяем что бинарник реальный (>1 MB), а не stub.
+#      # Dart AOT и Flutter.framework встраиваются ДО embed_and_thin,
+#      # поэтому IPA работоспособен даже при краше на native assets.
+#      - name: Package unsigned IPA
+#        run: |
+#          APP=$(find build/ios -name "Runner.app" -type d | head -1)
+#          if [ -z "$APP" ] || [ ! -f "$APP/Runner" ]; then
+#            echo "ERROR: Runner binary not found"
+#            find build/ios -type d -name "*.app" 2>/dev/null | head -5
+#            exit 1
+#          fi
+#          BINARY_SIZE=$(wc -c < "$APP/Runner")
+#          echo "Runner binary: $BINARY_SIZE bytes"
+#          if [ "$BINARY_SIZE" -lt 1000000 ]; then
+#            echo "ERROR: Binary is too small (${BINARY_SIZE}B) — Xcode compilation failed, not just embed_and_thin"
+#            exit 1
+#          fi
+#          echo "Found: $APP  ($(du -sh "$APP" | cut -f1))"
+#          mkdir -p Payload build/ios/ipa
+#          cp -r "$APP" Payload/
+#          zip -r build/ios/ipa/Runner.ipa Payload/
+#          echo "IPA: $(du -sh build/ios/ipa/Runner.ipa | cut -f1)"
+#
+#      # ── 11. Загрузить IPA ───────────────────────────
+#      - name: Upload IPA artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ios-ipa-${{ github.run_number }}
+#          path: build/ios/ipa/Runner.ipa
+#          retention-days: 30

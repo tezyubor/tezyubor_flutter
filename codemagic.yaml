@@ -1,8 +1,16 @@
 workflows:
-  ios-unsigned:
-    name: iOS Unsigned IPA
+  ios-testflight:
+    name: iOS TestFlight
     max_build_duration: 60
     instance_type: mac_mini_m2
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.tezyubor.app
+      flutter: stable
+      groups:
+        - ios_credentials
 
     triggering:
       events:
@@ -21,42 +29,20 @@ workflows:
           bundle install
           bundle exec pod install --repo-update
 
-      - name: Patch Xcode project for unsigned CI build
-        script: |
-          python3 - <<'EOF'
-          path = 'ios/Runner.xcodeproj/project.pbxproj'
-          with open(path, 'r') as f:
-              content = f.read()
-          old = '"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";'
-          new = (
-              '"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";\n'
-              '\t\t\t\tCODE_SIGNING_ALLOWED = NO;\n'
-              '\t\t\t\tCODE_SIGNING_REQUIRED = NO;\n'
-              '\t\t\t\tDEVELOPMENT_TEAM = CIBUILDDUMMY;'
-          )
-          patched = content.replace(old, new)
-          count = patched.count('DEVELOPMENT_TEAM = CIBUILDDUMMY')
-          with open(path, 'w') as f:
-              f.write(patched)
-          print(f'Patched {count} build configuration(s)')
-          EOF
+      - name: Set up code signing
+        script: xcode-project use-profiles
 
-      - name: Build iOS (no codesign)
-        script: flutter build ios --release --no-codesign
-
-      - name: Package unsigned IPA
+      - name: Flutter build IPA
         script: |
-          APP=$(find build/ios -name "Runner.app" -type d | head -1)
-          if [ -z "$APP" ] || [ ! -f "$APP/Runner" ]; then
-            echo "ERROR: Runner binary not found"
-            find build/ios -type f -name "Runner" 2>/dev/null | head -5
-            exit 1
-          fi
-          echo "Found: $APP  ($(du -sh "$APP" | cut -f1))"
-          mkdir -p Payload build/ios/ipa
-          cp -r "$APP" Payload/
-          zip -r build/ios/ipa/Runner.ipa Payload/
-          echo "IPA ready: build/ios/ipa/Runner.ipa"
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
-      - build/ios/ipa/Runner.ipa
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
