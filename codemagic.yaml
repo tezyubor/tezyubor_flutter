@@ -5,9 +5,6 @@ workflows:
     instance_type: mac_mini_m2
 
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.tezyubor.app
       flutter: stable
       groups:
         - ios_credentials
@@ -20,6 +17,22 @@ workflows:
           include: true
 
     scripts:
+      - name: Initialize keychain
+        script: keychain initialize
+
+      - name: Fetch signing files (certificate + profile)
+        script: |
+          app-store-connect fetch-signing-files \
+            com.tezyubor.app \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Add certificates to keychain
+        script: keychain add-certificates
+
+      - name: Apply provisioning profiles
+        script: xcode-project use-profiles
+
       - name: Get Flutter packages
         script: flutter pub get
 
@@ -28,9 +41,6 @@ workflows:
           cd ios
           bundle install
           bundle exec pod install --repo-update
-
-      - name: Set up code signing
-        script: xcode-project use-profiles
 
       - name: Flutter build IPA
         script: |
