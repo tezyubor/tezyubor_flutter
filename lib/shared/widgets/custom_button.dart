@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/haptic_service.dart';
 
 enum ButtonVariant { primary, outline, ghost, destructive }
 
@@ -46,22 +47,22 @@ class CustomButton extends StatelessWidget {
     switch (variant) {
       case ButtonVariant.primary:
         button = ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
+          onPressed: isLoading ? null : _withHaptic(onPressed),
           child: child,
         );
       case ButtonVariant.outline:
         button = OutlinedButton(
-          onPressed: isLoading ? null : onPressed,
+          onPressed: isLoading ? null : _withHaptic(onPressed),
           child: child,
         );
       case ButtonVariant.ghost:
         button = TextButton(
-          onPressed: isLoading ? null : onPressed,
+          onPressed: isLoading ? null : _withHaptic(onPressed),
           child: child,
         );
       case ButtonVariant.destructive:
         button = ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
+          onPressed: isLoading ? null : _withHaptic(onPressed),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.error,
             foregroundColor: Colors.white,
@@ -78,6 +79,9 @@ class CustomButton extends StatelessWidget {
     }
     return SizedBox(height: height, child: button);
   }
+
+  VoidCallback? _withHaptic(VoidCallback? cb) =>
+      cb == null ? null : () { HapticService.light(); cb(); };
 
   Color _loaderColor(BuildContext context) {
     switch (variant) {

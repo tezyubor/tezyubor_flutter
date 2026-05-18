@@ -615,7 +615,44 @@ class _AdminCreateOrderSheetState
             ),
             const SizedBox(height: 16),
 
-            const _SheetSectionLabel('ЗАКАЗ'),
+            _SheetSectionLabel(l10n.customer),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: borderColor),
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                    child: TextField(
+                      controller: _nameCtrl,
+                      decoration: InputDecoration(
+                        labelText: l10n.customer,
+                        prefixIcon: const Icon(Icons.person_outline),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+                    child: TextField(
+                      controller: _phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [UzPhoneFormatter()],
+                      decoration: InputDecoration(
+                        labelText: l10n.phone,
+                        prefixIcon: const Icon(Icons.phone_outlined),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            _SheetSectionLabel(l10n.order),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
@@ -645,43 +682,6 @@ class _AdminCreateOrderSheetState
                       decoration: InputDecoration(
                         labelText: l10n.orderAmountLbl,
                         prefixIcon: const Icon(Icons.shopping_bag_outlined),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            const _SheetSectionLabel('КЛИЕНТ'),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: borderColor),
-              ),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                    child: TextField(
-                      controller: _nameCtrl,
-                      decoration: InputDecoration(
-                        labelText: l10n.customer,
-                        prefixIcon: const Icon(Icons.person_outline),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-                    child: TextField(
-                      controller: _phoneCtrl,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [UzPhoneFormatter()],
-                      decoration: InputDecoration(
-                        labelText: l10n.phone,
-                        prefixIcon: const Icon(Icons.phone_outlined),
                       ),
                     ),
                   ),

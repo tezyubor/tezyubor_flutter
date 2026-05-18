@@ -168,6 +168,7 @@ class AppL10n {
   String get account => _t('Аккаунт', 'Akkaunt', 'Account');
   String get application => _t('Приложение', 'Ilova', 'Application');
   String get language => _t('Язык', 'Til', 'Language');
+  String get hapticFeedback => _t('Виброотклик', 'Tebranish', 'Haptic Feedback');
   String get theme => _t('Тема', 'Mavzu', 'Theme');
   String get themeDark => _t('Тёмная', "Qorong'u", 'Dark');
   String get themeLight => _t("Светлая", "Yorug'", 'Light');

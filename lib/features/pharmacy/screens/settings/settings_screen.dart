@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_l10n.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../shared/utils/right_panel.dart';
 import '../../../../shared/utils/uz_phone_formatter.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -25,6 +26,7 @@ class SettingsScreen extends ConsumerWidget {
     final profileState = ref.watch(pharmacyProfileProvider);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    final hapticEnabled = ref.watch(hapticEnabledProvider);
     final profile = profileState.profile;
 
     return Scaffold(
@@ -108,6 +110,16 @@ class SettingsScreen extends ConsumerWidget {
                       title: l10n.language,
                       subtitle: _localeName(locale.languageCode),
                       onTap: () => _showLanguagePicker(context, ref, l10n),
+                    ),
+                    // Haptic feedback
+                    ListTile(
+                      leading: const Icon(Icons.vibration_outlined, color: AppColors.primary, size: 22),
+                      title: Text(l10n.hapticFeedback, style: Theme.of(context).textTheme.bodyMedium),
+                      trailing: Switch(
+                        value: hapticEnabled,
+                        onChanged: (_) => ref.read(hapticEnabledProvider.notifier).toggle(),
+                        activeThumbColor: AppColors.primary,
+                      ),
                     ),
                   ],
                 ),

@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_l10n.dart';
 import '../../../core/services/env_config_service.dart';
+import '../../../core/services/haptic_service.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../models/auth_models.dart';
@@ -110,9 +111,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _onServerHoldStart(LongPressStartDetails _) {
-    _serverHoldTimer = Timer(const Duration(seconds: 10), () async {
+    _serverHoldTimer = Timer(const Duration(seconds: 5), () async {
       await ref.read(serverConfigProvider.notifier).toggle();
       if (!mounted) return;
+      HapticService.heavy();
       final label = ref.read(serverConfigProvider).label;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(label), duration: const Duration(seconds: 2)),
@@ -127,6 +129,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _logoTapCount++;
     if (_logoTapCount >= AppConstants.logoTapCountToSwitchEnv) {
       _logoTapCount = 0;
+      HapticService.medium();
       ref.read(environmentProvider.notifier).toggle();
       final env = ref.read(environmentProvider);
       final envName = env == AppEnvironment.admin ? 'Admin' : 'App';

@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../core/services/haptic_service.dart';
 
 /// Pushes [page] as a new route that slides in from the right.
 /// On iOS uses [CupertinoPageRoute] to enable the native edge swipe-back gesture.
 Future<T?> pushRightPanel<T>(BuildContext context, Widget page) {
+  HapticService.light();
   if (Platform.isIOS) {
     return Navigator.of(context).push<T>(
       CupertinoPageRoute<T>(builder: (_) => page),
