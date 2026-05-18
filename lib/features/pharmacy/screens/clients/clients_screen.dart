@@ -7,6 +7,7 @@ import '../../../../core/l10n/app_l10n.dart';
 import '../../../../shared/utils/right_panel.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../models/client_model.dart';
 import '../../providers/clients_provider.dart';
 
@@ -41,6 +42,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   }
 
   void _toggleSearch() {
+    HapticService.light();
     setState(() => _searchVisible = !_searchVisible);
     if (!_searchVisible) {
       _searchController.clear();
@@ -51,6 +53,7 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
   }
 
   void _openFilter() {
+    HapticService.light();
     final current = ref.read(clientsProvider).filter;
     showModalBottomSheet(
       context: context,
@@ -156,8 +159,10 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                           : null,
                     )
                   : RefreshIndicator(
-                      onRefresh: () =>
-                          ref.read(clientsProvider.notifier).load(),
+                      onRefresh: () async {
+                        HapticService.medium();
+                        await ref.read(clientsProvider.notifier).load();
+                      },
                       color: AppColors.primary,
                       child: ListView.separated(
                         padding: const EdgeInsets.all(16),
@@ -168,7 +173,10 @@ class _ClientsScreenState extends ConsumerState<ClientsScreen> {
                           final c = state.clients[i];
                           return _ClientCard(
                             client: c,
-                            onTap: () => _showDetail(c),
+                            onTap: () {
+                              HapticService.light();
+                              _showDetail(c);
+                            },
                           );
                         },
                       ),
@@ -401,6 +409,7 @@ class _ClientFilterSheetState extends State<_ClientFilterSheet> {
   }
 
   Future<void> _pickDate(bool isFrom) async {
+    HapticService.light();
     final picked = await showDatePicker(
       context: context,
       initialDate: (isFrom ? _dateFrom : _dateTo) ?? DateTime.now(),
@@ -442,6 +451,7 @@ class _ClientFilterSheetState extends State<_ClientFilterSheet> {
               const Spacer(),
               TextButton(
                 onPressed: () {
+                  HapticService.light();
                   widget.onClear();
                   Navigator.pop(context);
                 },
@@ -505,6 +515,7 @@ class _ClientFilterSheetState extends State<_ClientFilterSheet> {
             height: 52,
             child: ElevatedButton(
               onPressed: () {
+                HapticService.light();
                 widget.onApply(ClientsFilter(
                   search: widget.current.search,
                   dateFrom: _dateFrom,

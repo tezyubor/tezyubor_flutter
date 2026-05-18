@@ -5,6 +5,7 @@ import '../../../../core/l10n/app_l10n.dart';
 import '../../../../shared/utils/right_panel.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../models/admin_models.dart';
 import '../../providers/admin_provider.dart';
 
@@ -148,7 +149,10 @@ class _RolesTab extends ConsumerWidget {
         title: l10n.adminNoRoles,
         subtitle: l10n.adminNoRolesSub,
         action: ElevatedButton.icon(
-          onPressed: () => pushRightPanel(context, const _RoleFormPage()),
+          onPressed: () {
+            HapticService.light();
+            pushRightPanel(context, const _RoleFormPage());
+          },
           icon: const Icon(Icons.add),
           label: Text(l10n.adminCreateRole),
         ),
@@ -157,7 +161,10 @@ class _RolesTab extends ConsumerWidget {
 
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () => ref.read(adminRolesProvider.notifier).load(),
+        onRefresh: () async {
+          HapticService.medium();
+          await ref.read(adminRolesProvider.notifier).load();
+        },
         color: AppColors.primary,
         child: ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -167,7 +174,10 @@ class _RolesTab extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => pushRightPanel(context, const _RoleFormPage()),
+        onPressed: () {
+          HapticService.light();
+          pushRightPanel(context, const _RoleFormPage());
+        },
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
@@ -221,8 +231,10 @@ class _RoleCard extends ConsumerWidget {
                     padding: const EdgeInsets.all(6),
                     minimumSize: const Size(32, 32),
                   ),
-                  onPressed: () =>
-                      pushRightPanel(context, _RoleFormPage(role: role)),
+                  onPressed: () {
+                    HapticService.light();
+                    pushRightPanel(context, _RoleFormPage(role: role));
+                  },
                 ),
                 const SizedBox(width: 6),
                 IconButton(
@@ -233,7 +245,10 @@ class _RoleCard extends ConsumerWidget {
                     padding: const EdgeInsets.all(6),
                     minimumSize: const Size(32, 32),
                   ),
-                  onPressed: () => _delete(context, ref),
+                  onPressed: () {
+                    HapticService.light();
+                    _delete(context, ref);
+                  },
                 ),
               ],
             ),
@@ -420,14 +435,18 @@ class _RoleFormPageState extends ConsumerState<_RoleFormPage> {
                     style: Theme.of(context).textTheme.titleSmall),
                 const Spacer(),
                 TextButton(
-                  onPressed: () =>
-                      setState(() => _selected.addAll(_allPermissions)),
+                  onPressed: () {
+                    HapticService.selection();
+                    setState(() => _selected.addAll(_allPermissions));
+                  },
                   child: Text(l10n.adminSelectAll,
                       style: const TextStyle(fontSize: 12)),
                 ),
                 TextButton(
-                  onPressed: () =>
-                      setState(() => _selected.clear()),
+                  onPressed: () {
+                    HapticService.selection();
+                    setState(() => _selected.clear());
+                  },
                   child: Text(l10n.adminClearAll,
                       style: const TextStyle(fontSize: 12)),
                 ),
@@ -510,7 +529,10 @@ class _PermSection extends StatelessWidget {
         child: Column(
           children: [
             InkWell(
-              onTap: () => onToggleAll(perms, !allSelected),
+              onTap: () {
+                HapticService.selection();
+                onToggleAll(perms, !allSelected);
+              },
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(12)),
               child: Padding(
@@ -539,7 +561,10 @@ class _PermSection extends StatelessWidget {
                           ? true
                           : (anySelected ? null : false),
                       tristate: true,
-                      onChanged: (_) => onToggleAll(perms, !allSelected),
+                      onChanged: (_) {
+                        HapticService.selection();
+                        onToggleAll(perms, !allSelected);
+                      },
                       activeColor: AppColors.primary,
                       materialTapTargetSize:
                           MaterialTapTargetSize.shrinkWrap,
@@ -553,7 +578,10 @@ class _PermSection extends StatelessWidget {
             ...perms.map((p) {
               final isSelected = selected.contains(p);
               return InkWell(
-                onTap: () => onToggle(p, !isSelected),
+                onTap: () {
+                  HapticService.selection();
+                  onToggle(p, !isSelected);
+                },
                 borderRadius: p == perms.last
                     ? const BorderRadius.vertical(
                         bottom: Radius.circular(12))
@@ -578,7 +606,10 @@ class _PermSection extends StatelessWidget {
                       ),
                       Checkbox(
                         value: isSelected,
-                        onChanged: (v) => onToggle(p, v ?? false),
+                        onChanged: (v) {
+                          HapticService.selection();
+                          onToggle(p, v ?? false);
+                        },
                         activeColor: AppColors.primary,
                         materialTapTargetSize:
                             MaterialTapTargetSize.shrinkWrap,
@@ -619,8 +650,10 @@ class _UsersTab extends ConsumerWidget {
         icon: Icons.people_outline,
         title: l10n.adminNoUsers,
         action: ElevatedButton.icon(
-          onPressed: () => pushRightPanel(
-              context, _UserFormPage(roles: rolesState.roles)),
+          onPressed: () {
+            HapticService.light();
+            pushRightPanel(context, _UserFormPage(roles: rolesState.roles));
+          },
           icon: const Icon(Icons.add),
           label: Text(l10n.adminCreateUser),
         ),
@@ -629,7 +662,10 @@ class _UsersTab extends ConsumerWidget {
 
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: () => ref.read(adminUsersProvider.notifier).load(),
+        onRefresh: () async {
+          HapticService.medium();
+          await ref.read(adminUsersProvider.notifier).load();
+        },
         color: AppColors.primary,
         child: ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -642,8 +678,10 @@ class _UsersTab extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => pushRightPanel(
-            context, _UserFormPage(roles: rolesState.roles)),
+        onPressed: () {
+          HapticService.light();
+          pushRightPanel(context, _UserFormPage(roles: rolesState.roles));
+        },
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
@@ -735,8 +773,10 @@ class _UserCard extends ConsumerWidget {
             ),
             IconButton(
               icon: const Icon(Icons.edit_outlined, size: 18),
-              onPressed: () => pushRightPanel(
-                  context, _UserFormPage(user: user, roles: roles)),
+              onPressed: () {
+                HapticService.light();
+                pushRightPanel(context, _UserFormPage(user: user, roles: roles));
+              },
             ),
           ],
         ),
@@ -915,9 +955,12 @@ class _UserFormPageState extends ConsumerState<_UserFormPage> {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     value: _selectedRoleIds.contains(role.id),
-                    onChanged: (v) => setState(() => v == true
-                        ? _selectedRoleIds.add(role.id)
-                        : _selectedRoleIds.remove(role.id)),
+                    onChanged: (v) {
+                      HapticService.selection();
+                      setState(() => v == true
+                          ? _selectedRoleIds.add(role.id)
+                          : _selectedRoleIds.remove(role.id));
+                    },
                     activeColor: AppColors.primary,
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,

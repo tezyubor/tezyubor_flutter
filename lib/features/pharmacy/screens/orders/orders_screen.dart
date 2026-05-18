@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_l10n.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../shared/utils/right_panel.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
@@ -85,6 +86,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen>
   }
 
   void _openCreate() {
+    HapticService.light();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -108,6 +110,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen>
   }
 
   void _toggleSearch() {
+    HapticService.light();
     setState(() => _searchVisible = !_searchVisible);
     if (!_searchVisible) {
       _searchController.clear();
@@ -117,6 +120,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen>
   }
 
   void _openFilter() {
+    HapticService.light();
     final current = ref.read(ordersProvider).filter;
     showModalBottomSheet(
       context: context,
@@ -309,7 +313,10 @@ class _TabOrderList extends ConsumerWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () => ref.read(ordersProvider.notifier).load(),
+      onRefresh: () async {
+        HapticService.medium();
+        await ref.read(ordersProvider.notifier).load();
+      },
       color: AppColors.primary,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 110),
@@ -552,7 +559,7 @@ class _OrderCard extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () => _cancel(context, ref),
+                                onPressed: () { HapticService.light(); _cancel(context, ref); },
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.error,
                                   side: const BorderSide(
@@ -568,7 +575,7 @@ class _OrderCard extends ConsumerWidget {
                             const SizedBox(width: 10),
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () => _confirm(context, ref),
+                                onPressed: () { HapticService.light(); _confirm(context, ref); },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.success,
                                   foregroundColor: Colors.white,
@@ -981,6 +988,7 @@ class _SheetPhoneRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 GestureDetector(
                   onTap: () async {
+                    HapticService.light();
                     final uri = Uri(scheme: 'tel', path: phone);
                     if (await canLaunchUrl(uri)) await launchUrl(uri);
                   },
@@ -1030,6 +1038,7 @@ class _TrackingRow extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: () {
+                  HapticService.light();
                   Clipboard.setData(ClipboardData(text: url));
                   ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(l10n.copied)));
@@ -1047,6 +1056,7 @@ class _TrackingRow extends StatelessWidget {
               const SizedBox(width: 6),
               GestureDetector(
                 onTap: () async {
+                  HapticService.light();
                   final uri = Uri.tryParse(url);
                   if (uri != null) {
                     await launchUrl(uri, mode: LaunchMode.inAppWebView);
@@ -1125,6 +1135,7 @@ class _ShareLinkCard extends StatelessWidget {
             icon: const Icon(Icons.copy,
                 size: 17, color: AppColors.primary),
             onPressed: () {
+              HapticService.light();
               Clipboard.setData(ClipboardData(text: url));
               ScaffoldMessenger.of(context)
                   .showSnackBar(SnackBar(content: Text(l10n.copied)));
@@ -1136,6 +1147,7 @@ class _ShareLinkCard extends StatelessWidget {
             icon: const Icon(Icons.open_in_new,
                 size: 17, color: AppColors.primary),
             onPressed: () async {
+              HapticService.light();
               final uri = Uri.tryParse(url);
               if (uri != null) {
                 await launchUrl(uri, mode: LaunchMode.inAppWebView);
@@ -1166,7 +1178,7 @@ class _ActionButtons extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _confirm(context),
+                onPressed: () { HapticService.light(); _confirm(context); },
                 icon: const Icon(Icons.check_circle_outline, size: 18),
                 label: Text(l10n.confirm),
                 style: ElevatedButton.styleFrom(
@@ -1183,7 +1195,7 @@ class _ActionButtons extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => _cancel(context),
+              onPressed: () { HapticService.light(); _cancel(context); },
               icon: const Icon(Icons.cancel_outlined, size: 18),
               label: Text(l10n.cancel),
               style: OutlinedButton.styleFrom(
@@ -1267,6 +1279,7 @@ class _OrderFilterSheetState extends State<_OrderFilterSheet> {
   }
 
   Future<void> _pickDate(bool isFrom) async {
+    HapticService.light();
     final picked = await showDatePicker(
       context: context,
       initialDate: (isFrom ? _dateFrom : _dateTo) ?? DateTime.now(),
@@ -1361,8 +1374,7 @@ class _OrderFilterSheetState extends State<_OrderFilterSheet> {
                 label: c[0].toUpperCase() + c.substring(1),
                 selected: sel,
                 color: AppColors.primary,
-                onTap: () => setState(
-                    () => sel ? _couriers.remove(c) : _couriers.add(c)),
+                onTap: () { HapticService.selection(); setState(() => sel ? _couriers.remove(c) : _couriers.add(c)); },
               );
             }).toList(),
           ),
@@ -1416,6 +1428,7 @@ class _OrderFilterSheetState extends State<_OrderFilterSheet> {
             height: 52,
             child: ElevatedButton(
               onPressed: () {
+                HapticService.light();
                 widget.onApply(OrdersFilter(
                   search: widget.current.search,
                   statuses: widget.current.statuses,

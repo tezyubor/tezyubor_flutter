@@ -5,6 +5,7 @@ import '../../../../core/l10n/app_l10n.dart';
 import '../../../../shared/utils/right_panel.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../models/admin_models.dart';
 import '../../providers/admin_provider.dart';
 
@@ -49,6 +50,7 @@ class _AdminClientsScreenState extends ConsumerState<AdminClientsScreen> {
   }
 
   void _toggleSearch() {
+    HapticService.light();
     setState(() => _searchVisible = !_searchVisible);
     if (_searchVisible) {
       Future.delayed(const Duration(milliseconds: 80),
@@ -70,6 +72,7 @@ class _AdminClientsScreenState extends ConsumerState<AdminClientsScreen> {
   }
 
   void _openFilterSheet() {
+    HapticService.light();
     final current = ref.read(adminClientsProvider).filter;
     pushRightPanel(
       context,
@@ -147,8 +150,10 @@ class _AdminClientsScreenState extends ConsumerState<AdminClientsScreen> {
                       title: l10n.adminNoClients,
                     )
                   : RefreshIndicator(
-                      onRefresh: () =>
-                          ref.read(adminClientsProvider.notifier).load(),
+                      onRefresh: () async {
+                        HapticService.medium();
+                        await ref.read(adminClientsProvider.notifier).load();
+                      },
                       color: AppColors.primary,
                       child: ListView.separated(
                         padding: const EdgeInsets.all(16),
@@ -157,7 +162,10 @@ class _AdminClientsScreenState extends ConsumerState<AdminClientsScreen> {
                             const SizedBox(height: 8),
                         itemBuilder: (_, i) => _ClientCard(
                           client: state.clients[i],
-                          onTap: () => _showDetail(state.clients[i]),
+                          onTap: () {
+                            HapticService.light();
+                            _showDetail(state.clients[i]);
+                          },
                         ),
                       ),
                     ),
@@ -410,6 +418,7 @@ class _ClientFilterPageState extends State<_ClientFilterPage> {
   }
 
   Future<void> _pickDate(bool isFrom) async {
+    HapticService.light();
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
@@ -435,6 +444,7 @@ class _ClientFilterPageState extends State<_ClientFilterPage> {
             if (_activeCount > 0)
               TextButton(
                 onPressed: () {
+                  HapticService.light();
                   widget.onClear();
                   Navigator.pop(context);
                 },
@@ -450,6 +460,7 @@ class _ClientFilterPageState extends State<_ClientFilterPage> {
               height: 52,
               child: FilledButton(
                 onPressed: () {
+                  HapticService.light();
                   final minOrders =
                       int.tryParse(_minOrdersController.text.trim());
                   widget.onApply(AdminClientsFilter(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/l10n/app_l10n.dart';
+import '../../../core/services/haptic_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/subscription_provider.dart';
 
@@ -99,7 +100,7 @@ class SubscriptionExpiredModal extends ConsumerWidget {
                     ],
                     FilledButton(
                       onPressed:
-                          state.isPayLoading ? null : () => _pay(context, ref),
+                          state.isPayLoading ? null : () { HapticService.light(); _pay(context, ref); },
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         minimumSize: const Size(double.infinity, 48),
@@ -120,8 +121,7 @@ class SubscriptionExpiredModal extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     TextButton(
-                      onPressed: () =>
-                          ref.read(authStateProvider.notifier).logout(),
+                      onPressed: () { HapticService.light(); ref.read(authStateProvider.notifier).logout(); },
                       child: Text(
                         l10n.logout,
                         style: const TextStyle(color: AppColors.error),

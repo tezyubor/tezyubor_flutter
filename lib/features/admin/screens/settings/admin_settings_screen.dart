@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_l10n.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/admin_provider.dart';
 import '../roles/roles_screen.dart';
@@ -78,11 +79,14 @@ class AdminSettingsScreen extends ConsumerWidget {
                 _NavRow(
                   icon: Icons.manage_accounts_outlined,
                   label: l10n.adminGoToRoles,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const RolesScreen(),
-                    ),
-                  ),
+                  onTap: () {
+                    HapticService.light();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const RolesScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -281,7 +285,7 @@ class _ThemeSwitcherRow extends StatelessWidget {
           fontSize: 13,
         ),
       ),
-      onTap: () => _showThemePicker(context),
+      onTap: () { HapticService.light(); _showThemePicker(context); },
     );
   }
 
@@ -335,6 +339,7 @@ class _ThemeSwitcherRow extends StatelessWidget {
           )),
       trailing: selected ? const Icon(Icons.check, color: AppColors.primary) : null,
       onTap: () {
+        HapticService.selection();
         ref.read(themeModeProvider.notifier).setMode(mode);
         Navigator.pop(context);
       },
@@ -365,7 +370,7 @@ class _LanguageRow extends StatelessWidget {
           fontSize: 13,
         ),
       ),
-      onTap: () => _showLanguageSheet(context, ref),
+      onTap: () { HapticService.light(); _showLanguageSheet(context, ref); },
     );
   }
 
@@ -396,6 +401,7 @@ class _LanguageRow extends StatelessWidget {
               ListTile(
                 title: Text(entry.$2),
                 onTap: () {
+                  HapticService.selection();
                   Navigator.pop(ctx);
                   ref
                       .read(localeProvider.notifier)
@@ -422,7 +428,7 @@ class _LogoutButton extends ConsumerWidget {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: () => _confirmLogout(context, ref),
+        onPressed: () { HapticService.light(); _confirmLogout(context, ref); },
         icon: const Icon(Icons.logout, color: AppColors.error),
         label: Text(
           l10n.logout,

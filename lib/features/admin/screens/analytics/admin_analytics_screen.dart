@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_l10n.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../providers/admin_provider.dart';
@@ -21,7 +22,10 @@ class AdminAnalyticsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.read(adminAnalyticsProvider.notifier).load(),
+            onPressed: () {
+              HapticService.light();
+              ref.read(adminAnalyticsProvider.notifier).load();
+            },
           ),
         ],
       ),
@@ -36,8 +40,10 @@ class AdminAnalyticsScreen extends ConsumerWidget {
               : data == null
                   ? const SizedBox()
                   : RefreshIndicator(
-                      onRefresh: () =>
-                          ref.read(adminAnalyticsProvider.notifier).load(),
+                      onRefresh: () async {
+                        HapticService.medium();
+                        await ref.read(adminAnalyticsProvider.notifier).load();
+                      },
                       color: AppColors.primary,
                       child: ListView(
                         padding: const EdgeInsets.all(16),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/haptic_service.dart';
 import '../../../core/l10n/app_l10n.dart';
 import '../../../shared/widgets/pill_nav_bar.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -85,7 +86,7 @@ class _PharmacyMainScreenState extends ConsumerState<PharmacyMainScreen> {
       bottomNavigationBar: PillNavBar(
         currentIndex: _currentIndex,
         items: navItems,
-        onItemSelected: (i) => setState(() => _currentIndex = i),
+        onItemSelected: (i) { HapticService.selection(); setState(() => _currentIndex = i); },
       ),
     );
 

@@ -9,6 +9,7 @@ import '../../../../shared/utils/uz_phone_formatter.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
 import '../../../pharmacy/screens/location/location_picker_screen.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../models/admin_models.dart';
 import '../../providers/admin_provider.dart';
 
@@ -47,6 +48,7 @@ class _BusinessesScreenState extends ConsumerState<BusinessesScreen> {
   }
 
   void _toggleSearch() {
+    HapticService.light();
     setState(() => _searchVisible = !_searchVisible);
     if (!_searchVisible) {
       _searchController.clear();
@@ -58,6 +60,7 @@ class _BusinessesScreenState extends ConsumerState<BusinessesScreen> {
   }
 
   void _openFilter() {
+    HapticService.light();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -97,6 +100,7 @@ class _BusinessesScreenState extends ConsumerState<BusinessesScreen> {
   }
 
   void _openCreate() {
+    HapticService.light();
     pushRightPanel(context, const _PharmacyFormPage());
   }
 
@@ -179,8 +183,10 @@ class _BusinessesScreenState extends ConsumerState<BusinessesScreen> {
                       subtitle: l10n.adminNoBusinessesSub,
                     )
                   : RefreshIndicator(
-                      onRefresh: () =>
-                          ref.read(adminPharmaciesProvider.notifier).load(),
+                      onRefresh: () async {
+                        HapticService.medium();
+                        await ref.read(adminPharmaciesProvider.notifier).load();
+                      },
                       color: AppColors.primary,
                       child: ListView.separated(
                         padding:
@@ -190,11 +196,14 @@ class _BusinessesScreenState extends ConsumerState<BusinessesScreen> {
                             const SizedBox(height: 10),
                         itemBuilder: (_, i) => _PharmacyCard(
                           pharmacy: state.pharmacies[i],
-                          onTap: () => pushRightPanel(
-                            context,
-                            _PharmacyDetailPage(
-                                pharmacy: state.pharmacies[i]),
-                          ),
+                          onTap: () {
+                            HapticService.light();
+                            pushRightPanel(
+                              context,
+                              _PharmacyDetailPage(
+                                  pharmacy: state.pharmacies[i]),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -293,6 +302,7 @@ class _BusinessFilterSheetState extends State<_BusinessFilterSheet> {
               const Spacer(),
               TextButton(
                 onPressed: () {
+                  HapticService.light();
                   widget.onClear();
                   Navigator.pop(context);
                 },
@@ -330,21 +340,28 @@ class _BusinessFilterSheetState extends State<_BusinessFilterSheet> {
                 label: l10n.all,
                 selected: _isActive == null,
                 color: AppColors.primary,
-                onTap: () => setState(() => _isActive = null),
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _isActive = null);
+                },
               ),
               _ToggleChip(
                 label: l10n.adminBusinessActive,
                 selected: _isActive == 'true',
                 color: AppColors.success,
-                onTap: () => setState(
-                    () => _isActive = _isActive == 'true' ? null : 'true'),
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _isActive = _isActive == 'true' ? null : 'true');
+                },
               ),
               _ToggleChip(
                 label: l10n.adminBusinessInactive,
                 selected: _isActive == 'false',
                 color: AppColors.error,
-                onTap: () => setState(
-                    () => _isActive = _isActive == 'false' ? null : 'false'),
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _isActive = _isActive == 'false' ? null : 'false');
+                },
               ),
             ],
           ),
@@ -363,14 +380,19 @@ class _BusinessFilterSheetState extends State<_BusinessFilterSheet> {
                 label: l10n.adminCourierAll,
                 selected: _courier == null,
                 color: AppColors.primary,
-                onTap: () => setState(() => _courier = null),
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _courier = null);
+                },
               ),
               ..._allCouriers.map((c) => _ToggleChip(
                     label: c[0].toUpperCase() + c.substring(1),
                     selected: _courier == c,
                     color: AppColors.primary,
-                    onTap: () =>
-                        setState(() => _courier = _courier == c ? null : c),
+                    onTap: () {
+                      HapticService.selection();
+                      setState(() => _courier = _courier == c ? null : c);
+                    },
                   )),
             ],
           ),
@@ -380,6 +402,7 @@ class _BusinessFilterSheetState extends State<_BusinessFilterSheet> {
             height: 52,
             child: ElevatedButton(
               onPressed: () {
+                HapticService.light();
                 widget.onApply(_isActive, _courier);
                 Navigator.pop(context);
               },
@@ -646,6 +669,7 @@ class _PharmacyDetailPage extends ConsumerWidget {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () {
+                      HapticService.light();
                       Navigator.pop(context);
                       pushRightPanel(
                         context,
@@ -662,6 +686,7 @@ class _PharmacyDetailPage extends ConsumerWidget {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     onPressed: () async {
+                      HapticService.light();
                       final ok = await showDialog<bool>(
                         context: context,
                         builder: (ctx) => AlertDialog(
@@ -835,6 +860,7 @@ class _PharmacyFormPageState extends ConsumerState<_PharmacyFormPage> {
   }
 
   Future<void> _pickExpiry() async {
+    HapticService.light();
     final picked = await showDatePicker(
       context: context,
       initialDate:
@@ -987,26 +1013,29 @@ class _PharmacyFormPageState extends ConsumerState<_PharmacyFormPage> {
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.map_outlined,
                       color: AppColors.primary),
-                  onPressed: () => Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (_, __, ___) => LocationPickerScreen(
-                        initialAddress: _addressCtrl.text,
-                        onAddressPicked: (addr) =>
-                            setState(() => _addressCtrl.text = addr),
+                  onPressed: () {
+                    HapticService.light();
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => LocationPickerScreen(
+                          initialAddress: _addressCtrl.text,
+                          onAddressPicked: (addr) =>
+                              setState(() => _addressCtrl.text = addr),
+                        ),
+                        transitionsBuilder: (_, animation, __, child) =>
+                            SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(1, 0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeInOut)),
+                              child: child,
+                            ),
                       ),
-                      transitionsBuilder: (_, animation, __, child) =>
-                          SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(1, 0),
-                              end: Offset.zero,
-                            ).animate(CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeInOut)),
-                            child: child,
-                          ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
             ),

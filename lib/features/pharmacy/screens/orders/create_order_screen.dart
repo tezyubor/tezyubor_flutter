@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_l10n.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../shared/utils/uz_phone_formatter.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
@@ -132,7 +133,7 @@ class _CreateOrderSheetState extends ConsumerState<CreateOrderSheet> {
                   ),
                   const Spacer(),
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () { HapticService.light(); Navigator.pop(context); },
                     child: Container(
                       width: 32,
                       height: 32,

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../shared/utils/uz_phone_formatter.dart';
 import '../../../../shared/utils/right_panel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,6 +75,7 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen>
   }
 
   void _toggleSearch() {
+    HapticService.light();
     setState(() => _searchVisible = !_searchVisible);
     if (!_searchVisible) {
       _searchController.clear();
@@ -84,6 +86,7 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen>
   }
 
   void _openFilter() {
+    HapticService.light();
     final current = ref.read(adminOrdersProvider).filter;
     showModalBottomSheet(
       context: context,
@@ -101,6 +104,7 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen>
   }
 
   void _openCreate() {
+    HapticService.light();
     if (ref.read(adminPharmaciesProvider).pharmacies.isEmpty) {
       ref.read(adminPharmaciesProvider.notifier).load();
     }
@@ -254,6 +258,7 @@ class _AdminOrderFilterSheetState extends State<_AdminOrderFilterSheet> {
   }
 
   Future<void> _pickDate(bool isFrom) async {
+    HapticService.light();
     final picked = await showDatePicker(
       context: context,
       initialDate: (isFrom ? _dateFrom : _dateTo) ?? DateTime.now(),
@@ -347,14 +352,13 @@ class _AdminOrderFilterSheetState extends State<_AdminOrderFilterSheet> {
                 label: l10n.adminCourierAll,
                 selected: _courier == null,
                 color: AppColors.primary,
-                onTap: () => setState(() => _courier = null),
+                onTap: () { HapticService.selection(); setState(() => _courier = null); },
               ),
               ..._allCouriers.map((c) => _ToggleChip(
                     label: c[0].toUpperCase() + c.substring(1),
                     selected: _courier == c,
                     color: AppColors.primary,
-                    onTap: () =>
-                        setState(() => _courier = _courier == c ? null : c),
+                    onTap: () { HapticService.selection(); setState(() => _courier = _courier == c ? null : c); },
                   )),
             ],
           ),
@@ -408,6 +412,7 @@ class _AdminOrderFilterSheetState extends State<_AdminOrderFilterSheet> {
             height: 52,
             child: ElevatedButton(
               onPressed: () {
+                HapticService.light();
                 widget.onApply(AdminOrdersFilter(
                   search: widget.current.search,
                   courier: _courier,
@@ -572,7 +577,7 @@ class _AdminCreateOrderSheetState
             _SheetSectionLabel(l10n.adminSelectPharmacy),
             const SizedBox(height: 8),
             GestureDetector(
-              onTap: () => _showPharmacyPicker(context, pharmacies),
+              onTap: () { HapticService.light(); _showPharmacyPicker(context, pharmacies); },
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -832,6 +837,7 @@ class _PharmacyPickerPageState extends State<_PharmacyPickerPage> {
               selected: widget.selectedId == p.id,
               selectedColor: AppColors.primary,
               onTap: () {
+                HapticService.selection();
                 widget.onSelected(p);
                 Navigator.pop(context);
               },
@@ -863,7 +869,10 @@ class _AdminTabOrderList extends ConsumerWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () => ref.read(adminOrdersProvider.notifier).load(),
+      onRefresh: () async {
+        HapticService.medium();
+        await ref.read(adminOrdersProvider.notifier).load();
+      },
       color: AppColors.primary,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
@@ -1019,8 +1028,7 @@ class _AdminOrderCard extends ConsumerWidget {
                                 child: SizedBox(
                                   height: 38,
                                   child: ElevatedButton(
-                                    onPressed: () =>
-                                        _confirmOrder(context, ref),
+                                    onPressed: () { HapticService.light(); _confirmOrder(context, ref); },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppColors.success,
                                       foregroundColor: Colors.white,
@@ -1046,7 +1054,7 @@ class _AdminOrderCard extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: IconButton(
-                                  onPressed: () => _cancelOrder(context, ref),
+                                  onPressed: () { HapticService.light(); _cancelOrder(context, ref); },
                                   icon: const Icon(
                                     Icons.cancel_outlined,
                                     color: AppColors.error,
@@ -1258,6 +1266,7 @@ class _AdminOrderDetailPage extends ConsumerWidget {
                     padding: const EdgeInsets.only(top: 4),
                     child: GestureDetector(
                       onTap: () async {
+                        HapticService.light();
                         final uri = Uri.tryParse(order.trackingUrl!);
                         if (uri != null) {
                           await launchUrl(uri,
@@ -1291,6 +1300,7 @@ class _AdminOrderDetailPage extends ConsumerWidget {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () async {
+                    HapticService.light();
                     final ok = await ref
                         .read(adminOrdersProvider.notifier)
                         .confirmOrder(order.token);
@@ -1321,6 +1331,7 @@ class _AdminOrderDetailPage extends ConsumerWidget {
                 height: 52,
                 child: OutlinedButton(
                   onPressed: () async {
+                    HapticService.light();
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
@@ -1369,6 +1380,7 @@ class _AdminOrderDetailPage extends ConsumerWidget {
                 height: 52,
                 child: OutlinedButton.icon(
                   onPressed: () async {
+                    HapticService.light();
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(

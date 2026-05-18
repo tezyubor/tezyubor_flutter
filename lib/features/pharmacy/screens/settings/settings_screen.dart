@@ -74,20 +74,23 @@ class SettingsScreen extends ConsumerWidget {
                       icon: Icons.location_on_outlined,
                       title: l10n.location,
                       subtitle: profile?.address,
-                      onTap: () => Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => const LocationPickerScreen(),
-                          transitionsBuilder: (_, animation, __, child) =>
-                              SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(1, 0),
-                                  end: Offset.zero,
-                                ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOut)),
-                                child: child,
-                              ),
-                        ),
-                      ),
+                      onTap: () {
+                        HapticService.light();
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder: (_, __, ___) => const LocationPickerScreen(),
+                            transitionsBuilder: (_, animation, __, child) =>
+                                SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(1, 0),
+                                    end: Offset.zero,
+                                  ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOut)),
+                                  child: child,
+                                ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -136,7 +139,7 @@ class SettingsScreen extends ConsumerWidget {
 
                 // Logout
                 OutlinedButton.icon(
-                  onPressed: () => _logout(context, ref, l10n),
+                  onPressed: () { HapticService.light(); _logout(context, ref, l10n); },
                   icon: const Icon(Icons.logout, color: AppColors.error),
                   label: Text(
                     l10n.logout,
@@ -169,6 +172,7 @@ class SettingsScreen extends ConsumerWidget {
       };
 
   void _showThemePicker(BuildContext context, WidgetRef ref, AppL10n l10n) {
+    HapticService.light();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -181,6 +185,7 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   void _showLanguagePicker(BuildContext context, WidgetRef ref, AppL10n l10n) {
+    HapticService.light();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -272,6 +277,7 @@ class _ThemePickerSheet extends ConsumerWidget {
             label: l10n.themeLight,
             selected: current == ThemeMode.light,
             onTap: () {
+              HapticService.selection();
               ref.read(themeModeProvider.notifier).setMode(ThemeMode.light);
               Navigator.pop(context);
             },
@@ -281,6 +287,7 @@ class _ThemePickerSheet extends ConsumerWidget {
             label: l10n.themeDark,
             selected: current == ThemeMode.dark,
             onTap: () {
+              HapticService.selection();
               ref.read(themeModeProvider.notifier).setMode(ThemeMode.dark);
               Navigator.pop(context);
             },
@@ -290,6 +297,7 @@ class _ThemePickerSheet extends ConsumerWidget {
             label: l10n.themeSystem,
             selected: current == ThemeMode.system,
             onTap: () {
+              HapticService.selection();
               ref.read(themeModeProvider.notifier).setMode(ThemeMode.system);
               Navigator.pop(context);
             },
@@ -364,6 +372,7 @@ class _LanguagePickerSheet extends ConsumerWidget {
                       activeColor: AppColors.primary,
                     ),
                     onTap: () {
+                      HapticService.selection();
                       ref
                           .read(localeProvider.notifier)
                           .setLocale(Locale(code));
@@ -1072,6 +1081,7 @@ class _SubscriptionPageState extends ConsumerState<_SubscriptionPage> {
   bool _isLoading = false;
 
   Future<void> _pay() async {
+    HapticService.light();
     setState(() => _isLoading = true);
     final url =
         await ref.read(subscriptionProvider.notifier).createPayment();
@@ -1437,6 +1447,7 @@ class _LinkTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: () async {
+          HapticService.light();
           final uri = Uri.tryParse(url);
           if (uri != null) await launchUrl(uri, mode: LaunchMode.inAppWebView);
         },

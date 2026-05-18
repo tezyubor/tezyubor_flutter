@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_l10n.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../shared/widgets/custom_button.dart';
 import '../../../auth/providers/auth_provider.dart';
@@ -376,7 +377,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis)
                             : null,
-                        onTap: () => _onSuggestionTap(item),
+                        onTap: () { HapticService.selection(); _onSuggestionTap(item); },
                       );
                     },
                   ),
@@ -455,7 +456,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             right: 16,
             bottom: 200,
             child: FloatingActionButton.small(
-              onPressed: _goToMyLocation,
+              onPressed: () { HapticService.light(); _goToMyLocation(); },
               backgroundColor: Theme.of(context).colorScheme.surface,
               foregroundColor: AppColors.primary,
               child: const Icon(Icons.my_location),

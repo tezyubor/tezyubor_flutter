@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/haptic_service.dart';
 import 'status_badge.dart';
 
 /// Scrollable pill-chip tab bar that tracks TabController.animation for
@@ -136,7 +137,7 @@ class _StatusTabBarState extends State<StatusTabBar> {
               return KeyedSubtree(
                 key: _keys[i],
                 child: GestureDetector(
-                  onTap: () => widget.controller.animateTo(i),
+                  onTap: () { HapticService.selection(); widget.controller.animateTo(i); },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(

@@ -5,6 +5,7 @@ import '../../../../core/l10n/app_l10n.dart';
 import '../../../../shared/utils/right_panel.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../models/admin_models.dart';
 import '../../providers/admin_provider.dart';
 
@@ -48,6 +49,7 @@ class _ActivationsScreenState extends ConsumerState<ActivationsScreen> {
   }
 
   void _toggleSearch() {
+    HapticService.light();
     setState(() => _searchVisible = !_searchVisible);
     if (_searchVisible) {
       Future.delayed(
@@ -68,6 +70,7 @@ class _ActivationsScreenState extends ConsumerState<ActivationsScreen> {
   }
 
   void _openFilterSheet() {
+    HapticService.light();
     final current = ref.read(adminActivationsProvider).filter;
     showModalBottomSheet(
       context: context,
@@ -176,8 +179,10 @@ class _ActivationsScreenState extends ConsumerState<ActivationsScreen> {
                       ref.read(adminActivationsProvider.notifier).load(),
                 )
               : RefreshIndicator(
-                  onRefresh: () =>
-                      ref.read(adminActivationsProvider.notifier).load(),
+                  onRefresh: () async {
+                    HapticService.medium();
+                    await ref.read(adminActivationsProvider.notifier).load();
+                  },
                   color: AppColors.primary,
                   child: CustomScrollView(
                     slivers: [
@@ -200,7 +205,10 @@ class _ActivationsScreenState extends ConsumerState<ActivationsScreen> {
                                 const SizedBox(height: 8),
                             itemBuilder: (_, i) => _ActivationCard(
                               activation: state.activations[i],
-                              onTap: () => _showDetail(state.activations[i]),
+                              onTap: () {
+                                HapticService.light();
+                                _showDetail(state.activations[i]);
+                              },
                             ),
                           ),
                         ),
@@ -571,6 +579,7 @@ class _ActivationDetailPage extends StatelessWidget {
               const SizedBox(height: 24),
               OutlinedButton.icon(
                 onPressed: () {
+                  HapticService.light();
                   Navigator.pop(context);
                   onReassign();
                 },
@@ -816,6 +825,7 @@ class _ActivationFilterSheetState extends State<_ActivationFilterSheet> {
   }
 
   Future<void> _pickDate(bool isFrom) async {
+    HapticService.light();
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
@@ -884,6 +894,7 @@ class _ActivationFilterSheetState extends State<_ActivationFilterSheet> {
               if (_activeCount > 0)
                 TextButton(
                   onPressed: () {
+                    HapticService.light();
                     widget.onClear();
                     Navigator.pop(context);
                   },
@@ -917,20 +928,26 @@ class _ActivationFilterSheetState extends State<_ActivationFilterSheet> {
               _ToggleChip(
                 label: l10n.adminActivationSelfRegistered,
                 isSelected: _creatorType == 'self',
-                onTap: () => setState(() =>
-                    _creatorType = _creatorType == 'self' ? null : 'self'),
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _creatorType = _creatorType == 'self' ? null : 'self');
+                },
               ),
               _ToggleChip(
                 label: l10n.adminActivationSuperAdmin,
                 isSelected: _creatorType == 'superadmin',
-                onTap: () => setState(() => _creatorType =
-                    _creatorType == 'superadmin' ? null : 'superadmin'),
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _creatorType = _creatorType == 'superadmin' ? null : 'superadmin');
+                },
               ),
               _ToggleChip(
                 label: l10n.adminActivationByUser,
                 isSelected: _creatorType == 'user',
-                onTap: () => setState(() =>
-                    _creatorType = _creatorType == 'user' ? null : 'user'),
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _creatorType = _creatorType == 'user' ? null : 'user');
+                },
               ),
             ],
           ),
@@ -945,14 +962,18 @@ class _ActivationFilterSheetState extends State<_ActivationFilterSheet> {
               _ToggleChip(
                 label: l10n.adminBusinessActive,
                 isSelected: _status == 'active',
-                onTap: () => setState(
-                    () => _status = _status == 'active' ? null : 'active'),
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _status = _status == 'active' ? null : 'active');
+                },
               ),
               _ToggleChip(
                 label: l10n.adminBusinessInactive,
                 isSelected: _status == 'inactive',
-                onTap: () => setState(
-                    () => _status = _status == 'inactive' ? null : 'inactive'),
+                onTap: () {
+                  HapticService.selection();
+                  setState(() => _status = _status == 'inactive' ? null : 'inactive');
+                },
               ),
             ],
           ),
@@ -993,6 +1014,7 @@ class _ActivationFilterSheetState extends State<_ActivationFilterSheet> {
             height: 52,
             child: FilledButton(
               onPressed: () {
+                HapticService.light();
                 widget.onApply(AdminActivationsFilter(
                   creatorType: _creatorType,
                   status: _status,
