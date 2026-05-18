@@ -2,13 +2,7 @@
 
 source 'https://rubygems.org'
 
-# xcodeproj 1.27.0 has a type-checking regression that crashes pod install
-# when parsing PBXFileReference entries in Flutter's default project.pbxproj.
-# Pin to 1.26.0 until the fix is released.
-# Ref: https://github.com/CocoaPods/CocoaPods/issues/12569
-gem 'xcodeproj', '= 1.26.0'
-
-gem 'cocoapods', '~> 1.16.2'
+gem 'cocoapods', '~> 1.16'
 
 # kconv was removed from Ruby 4.0 standard library; nkf provides it
 gem 'nkf'
