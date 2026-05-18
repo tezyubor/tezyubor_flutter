@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/l10n/app_l10n.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/services/env_config_service.dart';
 import '../../../../shared/utils/right_panel.dart';
 import '../../../../shared/utils/uz_phone_formatter.dart';
 import '../../../../shared/widgets/custom_button.dart';
@@ -1317,23 +1314,15 @@ class _AboutAppTile extends ConsumerWidget {
 
 // ─── About app page ───────────────────────────────────────────────────────────
 
-class _AboutAppPage extends ConsumerStatefulWidget {
+class _AboutAppPage extends StatefulWidget {
   const _AboutAppPage();
 
   @override
-  ConsumerState<_AboutAppPage> createState() => _AboutAppPageState();
+  State<_AboutAppPage> createState() => _AboutAppPageState();
 }
 
-class _AboutAppPageState extends ConsumerState<_AboutAppPage> {
+class _AboutAppPageState extends State<_AboutAppPage> {
   String _version = '';
-  int _tapCount = 0;
-  DateTime? _lastTap;
-
-  // Long-press state
-  DateTime? _pressStart;
-  bool _pressing = false;
-  double _holdProgress = 0;
-  static const _holdDuration = Duration(seconds: 10);
 
   @override
   void initState() {
@@ -1343,58 +1332,12 @@ class _AboutAppPageState extends ConsumerState<_AboutAppPage> {
     });
   }
 
-  void _onTap() {
-    final now = DateTime.now();
-    if (_lastTap != null && now.difference(_lastTap!) > const Duration(seconds: 3)) {
-      _tapCount = 0;
-    }
-    _lastTap = now;
-    _tapCount++;
-    if (_tapCount >= AppConstants.logoTapCountToSwitchEnv) {
-      _tapCount = 0;
-      HapticFeedback.mediumImpact();
-      ref.read(envConfigProvider.notifier).toggleEnvironment();
-    }
-  }
-
-  void _onPressStart(TapDownDetails _) {
-    _pressStart = DateTime.now();
-    _pressing = true;
-    _tick();
-  }
-
-  void _onPressEnd(TapUpDetails _) => _cancelPress();
-  void _onPressCancel() => _cancelPress();
-
-  void _cancelPress() {
-    _pressing = false;
-    if (mounted) setState(() => _holdProgress = 0);
-  }
-
-  void _tick() async {
-    while (_pressing && mounted) {
-      await Future.delayed(const Duration(milliseconds: 50));
-      if (!_pressing || !mounted) break;
-      final elapsed = DateTime.now().difference(_pressStart!);
-      final progress = (elapsed.inMilliseconds / _holdDuration.inMilliseconds).clamp(0.0, 1.0);
-      setState(() => _holdProgress = progress);
-      if (progress >= 1.0) {
-        _pressing = false;
-        HapticFeedback.heavyImpact();
-        ref.read(envConfigProvider.notifier).toggleServer();
-        setState(() => _holdProgress = 0);
-        break;
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final lang = Localizations.localeOf(context).languageCode;
     final prefix = switch (lang) { 'uz' => 'uz', 'en' => 'en', _ => 'ru' };
-    final env = ref.watch(envConfigProvider);
 
     return SwipeToDismiss(
       child: Scaffold(
@@ -1407,45 +1350,16 @@ class _AboutAppPageState extends ConsumerState<_AboutAppPage> {
             padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
             children: [
               Center(
-                child: GestureDetector(
-                  onTap: _onTap,
-                  onTapDown: _onPressStart,
-                  onTapUp: _onPressEnd,
-                  onTapCancel: _onPressCancel,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 128,
-                        height: 128,
-                        child: CircularProgressIndicator(
-                          value: _holdProgress,
-                          strokeWidth: 3,
-                          color: _holdProgress > 0
-                              ? AppColors.primary
-                              : Colors.transparent,
-                          backgroundColor: Colors.transparent,
-                        ),
-                      ),
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary
-                              .withValues(alpha: isDark ? 0.12 : 0.08),
-                          borderRadius: BorderRadius.circular(32),
-                          border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.2)),
-                        ),
-                        child: Center(
-                          child: SvgPicture.asset(
-                            'assets/images/logo.svg',
-                            width: 72,
-                            height: 72,
-                          ),
-                        ),
-                      ),
-                    ],
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.08),
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Center(
+                    child: SvgPicture.asset('assets/images/logo.svg', width: 72, height: 72),
                   ),
                 ),
               ),
@@ -1453,24 +1367,13 @@ class _AboutAppPageState extends ConsumerState<_AboutAppPage> {
               Center(
                 child: RichText(
                   text: TextSpan(
-                    style: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1.5,
-                    ),
+                    style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800, letterSpacing: -1.5),
                     children: [
                       TextSpan(
                         text: 'tez',
-                        style: TextStyle(
-                          color: isDark
-                              ? AppColors.foregroundDark
-                              : AppColors.foregroundLight,
-                        ),
+                        style: TextStyle(color: isDark ? AppColors.foregroundDark : AppColors.foregroundLight),
                       ),
-                      const TextSpan(
-                        text: 'yubor',
-                        style: TextStyle(color: AppColors.primary),
-                      ),
+                      const TextSpan(text: 'yubor', style: TextStyle(color: AppColors.primary)),
                     ],
                   ),
                 ),
@@ -1481,15 +1384,6 @@ class _AboutAppPageState extends ConsumerState<_AboutAppPage> {
                   'v${_version.isEmpty ? '...' : _version}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _EnvBadge(label: env.serverLabel, isProd: env.server == AppServer.prod),
-                  const SizedBox(width: 8),
-                  _EnvBadge(label: env.envLabel, isProd: env.environment == AppEnvironment.app),
-                ],
               ),
               const SizedBox(height: 32),
               _LinkTile(
@@ -1506,29 +1400,6 @@ class _AboutAppPageState extends ConsumerState<_AboutAppPage> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _EnvBadge extends StatelessWidget {
-  final String label;
-  final bool isProd;
-  const _EnvBadge({required this.label, required this.isProd});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isProd ? Colors.green : Colors.orange;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
       ),
     );
   }

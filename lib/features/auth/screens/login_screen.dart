@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/app_l10n.dart';
+import '../../../core/services/env_config_service.dart';
 import '../../../shared/widgets/custom_button.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../models/auth_models.dart';
@@ -79,6 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   int _logoTapCount = 0;
   bool _localeInitialized = false;
+  Timer? _serverHoldTimer;
 
   @override
   void didChangeDependencies() {
@@ -98,11 +102,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void dispose() {
+    _serverHoldTimer?.cancel();
     _loginController.dispose();
     _passwordController.dispose();
     _passwordFocus.dispose();
     super.dispose();
   }
+
+  void _onServerHoldStart(LongPressStartDetails _) {
+    _serverHoldTimer = Timer(const Duration(seconds: 10), () async {
+      await ref.read(serverConfigProvider.notifier).toggle();
+      if (!mounted) return;
+      final label = ref.read(serverConfigProvider).label;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(label), duration: const Duration(seconds: 2)),
+      );
+    });
+  }
+
+  void _onServerHoldEnd(LongPressEndDetails _) => _serverHoldTimer?.cancel();
+  void _onServerHoldCancel() => _serverHoldTimer?.cancel();
 
   void _onLogoTap() {
     _logoTapCount++;
@@ -197,6 +216,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Logo
                 GestureDetector(
                   onTap: _onLogoTap,
+                  onLongPressStart: _onServerHoldStart,
+                  onLongPressEnd: _onServerHoldEnd,
+                  onLongPressCancel: _onServerHoldCancel,
                   child: Column(
                     children: [
                       Container(
