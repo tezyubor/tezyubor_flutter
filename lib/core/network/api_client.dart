@@ -10,7 +10,7 @@ class ApiClient {
   ApiClient._internal() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: AppConstants.apiUrl,
+        baseUrl: AppConstants.baseUrl,
         connectTimeout: const Duration(seconds: 20),
         receiveTimeout: const Duration(seconds: 20),
         headers: {'Content-Type': 'application/json'},
@@ -53,6 +53,10 @@ class ApiClient {
   }
 
   Dio get dio => _dio;
+
+  void updateBaseUrl(String url) {
+    _dio.options.baseUrl = url;
+  }
 
   Future<Response> get(String path, {Map<String, dynamic>? params}) =>
       _dio.get(path, queryParameters: params);

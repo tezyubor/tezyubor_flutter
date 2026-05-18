@@ -1,14 +1,7 @@
 class AppConstants {
   // ─── API ────────────────────────────────────────────────────────────────────
-  static const bool useDev = false;
-
   static const String baseUrl = 'https://api.tezyubor.uz/api';
-
-  // Для Android эмулятора 10.0.2.2 = localhost хоста
-  // Для физического устройства замени на IP своего ПК: http://192.168.1.X:5000/api
-  static const String devBaseUrl = 'http://10.0.2.2:5000/api';
-
-  static String get apiUrl => useDev ? devBaseUrl : baseUrl;
+  static const String devBaseUrl = 'https://dev-api.tezyubor.uz/api';
 
   // ─── Yandex Maps ─────────────────────────────────────────────────────────────
   static const String yandexMapsKey = '1422898e-3abb-4ce2-b9b7-d419e33da9f8';
