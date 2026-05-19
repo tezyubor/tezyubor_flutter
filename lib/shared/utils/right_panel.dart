@@ -8,14 +8,20 @@ import '../../core/services/haptic_service.dart';
 /// On iOS uses [CupertinoPageRoute] to enable the native edge swipe-back gesture.
 Future<T?> pushRightPanel<T>(BuildContext context, Widget page) {
   HapticService.light();
+  final wrapped = PopScope(
+    onPopInvokedWithResult: (didPop, _) {
+      if (didPop) HapticService.medium();
+    },
+    child: page,
+  );
   if (Platform.isIOS) {
     return Navigator.of(context).push<T>(
-      CupertinoPageRoute<T>(builder: (_) => page),
+      CupertinoPageRoute<T>(builder: (_) => wrapped),
     );
   }
   return Navigator.of(context).push<T>(
     PageRouteBuilder<T>(
-      pageBuilder: (_, __, ___) => page,
+      pageBuilder: (_, __, ___) => wrapped,
       transitionDuration: const Duration(milliseconds: 300),
       reverseTransitionDuration: const Duration(milliseconds: 280),
       transitionsBuilder: (_, animation, __, child) => SlideTransition(

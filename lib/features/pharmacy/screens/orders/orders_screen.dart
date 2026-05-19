@@ -1305,7 +1305,11 @@ class _OrderFilterSheetState extends State<_OrderFilterSheet> {
         ? AppColors.mutedForegroundDark
         : AppColors.mutedForegroundLight;
 
-    return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) HapticService.medium();
+      },
+      child: Padding(
       padding: EdgeInsets.fromLTRB(
           20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 24),
       child: Column(
@@ -1347,6 +1351,7 @@ class _OrderFilterSheetState extends State<_OrderFilterSheet> {
               const Spacer(),
               TextButton(
                 onPressed: () {
+                  HapticService.light();
                   widget.onClear();
                   Navigator.pop(context);
                 },
@@ -1415,10 +1420,7 @@ class _OrderFilterSheetState extends State<_OrderFilterSheet> {
               if (_dateFrom != null || _dateTo != null)
                 IconButton(
                   icon: const Icon(Icons.clear, size: 16),
-                  onPressed: () => setState(() {
-                    _dateFrom = null;
-                    _dateTo = null;
-                  }),
+                  onPressed: () { HapticService.light(); setState(() { _dateFrom = null; _dateTo = null; }); },
                 ),
             ],
           ),
@@ -1446,6 +1448,7 @@ class _OrderFilterSheetState extends State<_OrderFilterSheet> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

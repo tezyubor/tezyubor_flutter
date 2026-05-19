@@ -852,7 +852,11 @@ class _ActivationFilterSheetState extends State<_ActivationFilterSheet> {
     final l10n = context.l10n;
     final theme = Theme.of(context);
 
-    return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) HapticService.medium();
+      },
+      child: Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -902,7 +906,7 @@ class _ActivationFilterSheetState extends State<_ActivationFilterSheet> {
                       style: const TextStyle(color: AppColors.primary)),
                 ),
               GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: () { HapticService.light(); Navigator.pop(context); },
                 child: Container(
                   width: 32,
                   height: 32,
@@ -991,7 +995,7 @@ class _ActivationFilterSheetState extends State<_ActivationFilterSheet> {
                   isSet: _dateFrom != null,
                   onTap: () => _pickDate(true),
                   onClear: _dateFrom != null
-                      ? () => setState(() => _dateFrom = null)
+                      ? () { HapticService.light(); setState(() => _dateFrom = null); }
                       : null,
                 ),
               ),
@@ -1002,7 +1006,7 @@ class _ActivationFilterSheetState extends State<_ActivationFilterSheet> {
                   isSet: _dateTo != null,
                   onTap: () => _pickDate(false),
                   onClear: _dateTo != null
-                      ? () => setState(() => _dateTo = null)
+                      ? () { HapticService.light(); setState(() => _dateTo = null); }
                       : null,
                 ),
               ),
@@ -1028,6 +1032,7 @@ class _ActivationFilterSheetState extends State<_ActivationFilterSheet> {
           ),
           const SizedBox(height: 24),
         ],
+      ),
       ),
     );
   }

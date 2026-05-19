@@ -10,19 +10,19 @@ class HapticService {
   static void update(bool value) => _enabled = value;
 
   static void light() {
-    if (_enabled) HapticFeedback.lightImpact();
-  }
-
-  static void medium() {
     if (_enabled) HapticFeedback.mediumImpact();
   }
 
-  static void heavy() {
+  static void medium() {
     if (_enabled) HapticFeedback.heavyImpact();
   }
 
+  static void heavy() {
+    if (_enabled) HapticFeedback.vibrate();
+  }
+
   static void selection() {
-    if (_enabled) HapticFeedback.selectionClick();
+    if (_enabled) HapticFeedback.mediumImpact();
   }
 }
 
