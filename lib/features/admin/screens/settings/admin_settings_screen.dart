@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_l10n.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../shared/utils/right_panel.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/admin_provider.dart';
 import '../roles/roles_screen.dart';
@@ -99,6 +103,16 @@ class AdminSettingsScreen extends ConsumerWidget {
             children: [
               _ThemeSwitcherRow(l10n: l10n, ref: ref),
               _LanguageRow(l10n: l10n, ref: ref),
+              _HapticRow(l10n: l10n, ref: ref),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // ── Application ────────────────────────────────────────────────
+          _SectionCard(
+            title: l10n.application,
+            children: [
+              _AboutAppTile(l10n: l10n),
             ],
           ),
           const SizedBox(height: 16),
@@ -464,5 +478,216 @@ class _LogoutButton extends ConsumerWidget {
     if (confirmed == true && context.mounted) {
       await ref.read(authStateProvider.notifier).logout();
     }
+  }
+}
+
+// ─── Haptic feedback row ──────────────────────────────────────────────────────
+
+class _HapticRow extends ConsumerWidget {
+  final AppL10n l10n;
+  final WidgetRef ref;
+
+  const _HapticRow({required this.l10n, required this.ref});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hapticEnabled = ref.watch(hapticEnabledProvider);
+    return ListTile(
+      leading: Icon(
+        Icons.vibration_outlined,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        size: 20,
+      ),
+      title: Text(l10n.hapticFeedback),
+      trailing: Switch(
+        value: hapticEnabled,
+        onChanged: (_) => ref.read(hapticEnabledProvider.notifier).toggle(),
+        activeTrackColor: AppColors.primary,
+      ),
+    );
+  }
+}
+
+// ─── About app tile ───────────────────────────────────────────────────────────
+
+class _AboutAppTile extends StatelessWidget {
+  final AppL10n l10n;
+  const _AboutAppTile({required this.l10n});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PackageInfo>(
+      future: PackageInfo.fromPlatform(),
+      builder: (context, snap) {
+        final version = snap.data?.version ?? '...';
+        return ListTile(
+          leading: Icon(
+            Icons.info_outline,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            size: 20,
+          ),
+          title: Text(l10n.aboutApp),
+          subtitle: Text('tezyubor v$version'),
+          trailing: const Icon(Icons.chevron_right, size: 20),
+          onTap: () {
+            HapticService.light();
+            pushRightPanel(context, const _AboutAppPage());
+          },
+        );
+      },
+    );
+  }
+}
+
+// ─── About app page ───────────────────────────────────────────────────────────
+
+class _AboutAppPage extends StatefulWidget {
+  const _AboutAppPage();
+
+  @override
+  State<_AboutAppPage> createState() => _AboutAppPageState();
+}
+
+class _AboutAppPageState extends State<_AboutAppPage> {
+  String _version = '';
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _version = info.version);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final lang = Localizations.localeOf(context).languageCode;
+    final prefix = switch (lang) { 'uz' => 'uz', 'en' => 'en', _ => 'ru' };
+
+    return SwipeToDismiss(
+      child: Scaffold(
+        appBar: AppBar(
+          leading: const PanelBackButton(),
+          title: Text(l10n.aboutApp),
+        ),
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+            children: [
+              Center(
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.08),
+                    borderRadius: BorderRadius.circular(32),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Center(
+                    child: SvgPicture.asset('assets/images/logo.svg', width: 72, height: 72),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: RichText(
+                  text: TextSpan(
+                    style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800, letterSpacing: -1.5),
+                    children: [
+                      TextSpan(
+                        text: 'tez',
+                        style: TextStyle(color: isDark ? AppColors.foregroundDark : AppColors.foregroundLight),
+                      ),
+                      const TextSpan(text: 'yubor', style: TextStyle(color: AppColors.primary)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Center(
+                child: Text(
+                  'v${_version.isEmpty ? '...' : _version}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              const SizedBox(height: 32),
+              _LinkTile(
+                icon: Icons.description_outlined,
+                label: l10n.termsOfService,
+                url: 'https://tezyubor.uz/$prefix/terms',
+              ),
+              const SizedBox(height: 10),
+              _LinkTile(
+                icon: Icons.privacy_tip_outlined,
+                label: l10n.privacyPolicy,
+                url: 'https://tezyubor.uz/$prefix/privacy',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Link tile ────────────────────────────────────────────────────────────────
+
+class _LinkTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String url;
+
+  const _LinkTile({
+    required this.icon,
+    required this.label,
+    required this.url,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: isDark ? AppColors.cardDark : Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () async {
+          HapticService.light();
+          final uri = Uri.tryParse(url);
+          if (uri != null) await launchUrl(uri, mode: LaunchMode.inAppWebView);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: AppColors.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w500),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

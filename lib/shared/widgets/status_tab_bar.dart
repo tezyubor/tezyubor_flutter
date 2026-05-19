@@ -29,11 +29,13 @@ class StatusTabBar extends StatefulWidget implements PreferredSizeWidget {
 class _StatusTabBarState extends State<StatusTabBar> {
   late final List<GlobalKey> _keys;
   final _scrollCtrl = ScrollController();
+  int _lastIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _keys = List.generate(widget.statuses.length, (_) => GlobalKey());
+    _lastIndex = widget.controller.index;
     widget.controller.animation!.addListener(_onAnimChange);
   }
 
@@ -79,6 +81,10 @@ class _StatusTabBarState extends State<StatusTabBar> {
     final hi = val.ceil().clamp(0, widget.statuses.length - 1);
 
     if (lo == hi) {
+      if (lo != _lastIndex) {
+        _lastIndex = lo;
+        HapticService.selection();
+      }
       final off = _chipCenterOffset(lo);
       if (off != null) _scrollCtrl.jumpTo(off);
       return;

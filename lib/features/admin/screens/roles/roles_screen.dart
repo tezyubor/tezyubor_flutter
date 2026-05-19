@@ -87,15 +87,28 @@ class RolesScreen extends ConsumerStatefulWidget {
 class _RolesScreenState extends ConsumerState<RolesScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  int _lastTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.animation!.addListener(_onTabAnimChange);
+  }
+
+  void _onTabAnimChange() {
+    final val = _tabController.animation!.value;
+    final lo = val.floor().clamp(0, 1);
+    final hi = val.ceil().clamp(0, 1);
+    if (lo == hi && lo != _lastTabIndex) {
+      _lastTabIndex = lo;
+      HapticService.selection();
+    }
   }
 
   @override
   void dispose() {
+    _tabController.animation!.removeListener(_onTabAnimChange);
     _tabController.dispose();
     super.dispose();
   }

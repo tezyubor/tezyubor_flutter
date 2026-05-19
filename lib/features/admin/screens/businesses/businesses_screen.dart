@@ -872,6 +872,7 @@ class _PharmacyFormPageState extends ConsumerState<_PharmacyFormPage> {
   }
 
   Future<void> _submit() async {
+    HapticService.light();
     final l10n = context.l10n;
     if (_nameCtrl.text.trim().isEmpty ||
         _phoneCtrl.text.trim().isEmpty ||
@@ -999,8 +1000,10 @@ class _PharmacyFormPageState extends ConsumerState<_PharmacyFormPage> {
                   icon: Icon(_showPass
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined),
-                  onPressed: () =>
-                      setState(() => _showPass = !_showPass),
+                  onPressed: () {
+                    HapticService.light();
+                    setState(() => _showPass = !_showPass);
+                  },
                 ),
               ),
             ),
@@ -1092,8 +1095,10 @@ class _PharmacyFormPageState extends ConsumerState<_PharmacyFormPage> {
                         TextStyle(color: sel ? Colors.white : null),
                   ),
                   selected: sel,
-                  onSelected: (v) => setState(
-                      () => v ? _couriers.add(c) : _couriers.remove(c)),
+                  onSelected: (v) {
+                    HapticService.selection();
+                    setState(() => v ? _couriers.add(c) : _couriers.remove(c));
+                  },
                   selectedColor: AppColors.primary,
                   checkmarkColor: Colors.white,
                   showCheckmark: false,
@@ -1105,7 +1110,10 @@ class _PharmacyFormPageState extends ConsumerState<_PharmacyFormPage> {
               SwitchListTile(
                 title: Text(l10n.adminActiveAccount),
                 value: _isActive,
-                onChanged: (v) => setState(() => _isActive = v),
+                onChanged: (v) {
+                  HapticService.selection();
+                  setState(() => _isActive = v);
+                },
                 activeTrackColor: AppColors.primary,
                 contentPadding: EdgeInsets.zero,
               ),
