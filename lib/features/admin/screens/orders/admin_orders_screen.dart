@@ -284,7 +284,11 @@ class _AdminOrderFilterSheetState extends State<_AdminOrderFilterSheet> {
         ? AppColors.mutedForegroundDark
         : AppColors.mutedForegroundLight;
 
-    return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) HapticService.medium();
+      },
+      child: Padding(
       padding: EdgeInsets.fromLTRB(
           20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 24),
       child: Column(
@@ -326,6 +330,7 @@ class _AdminOrderFilterSheetState extends State<_AdminOrderFilterSheet> {
               const Spacer(),
               TextButton(
                 onPressed: () {
+                  HapticService.light();
                   widget.onClear();
                   Navigator.pop(context);
                 },
@@ -399,10 +404,7 @@ class _AdminOrderFilterSheetState extends State<_AdminOrderFilterSheet> {
               if (_dateFrom != null || _dateTo != null)
                 IconButton(
                   icon: const Icon(Icons.clear, size: 16),
-                  onPressed: () => setState(() {
-                    _dateFrom = null;
-                    _dateTo = null;
-                  }),
+                  onPressed: () { HapticService.light(); setState(() { _dateFrom = null; _dateTo = null; }); },
                 ),
             ],
           ),
@@ -429,6 +431,7 @@ class _AdminOrderFilterSheetState extends State<_AdminOrderFilterSheet> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -525,7 +528,11 @@ class _AdminCreateOrderSheetState
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) HapticService.medium();
+      },
+      child: Padding(
       padding: EdgeInsets.only(bottom: bottom),
       child: SizedBox(
         height: (screenHeight * 0.9 - bottom).clamp(200.0, screenHeight),
@@ -724,6 +731,7 @@ class _AdminCreateOrderSheetState
           ],
         ),
         ),
+      ),
       ),
     );
   }

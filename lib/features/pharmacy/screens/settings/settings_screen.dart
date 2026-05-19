@@ -242,7 +242,11 @@ class _ThemePickerSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(themeModeProvider);
     final theme = Theme.of(context);
-    return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) HapticService.medium();
+      },
+      child: Padding(
       padding: EdgeInsets.fromLTRB(
           20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 16),
       child: Column(
@@ -267,7 +271,7 @@ class _ThemePickerSheet extends ConsumerWidget {
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () { HapticService.light(); Navigator.pop(context); },
               ),
             ],
           ),
@@ -305,6 +309,7 @@ class _ThemePickerSheet extends ConsumerWidget {
           const SizedBox(height: 8),
         ],
       ),
+      ),
     );
   }
 }
@@ -319,7 +324,11 @@ class _LanguagePickerSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(localeProvider);
     final theme = Theme.of(context);
-    return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) HapticService.medium();
+      },
+      child: Padding(
       padding: EdgeInsets.fromLTRB(
           20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 16),
       child: Column(
@@ -344,7 +353,7 @@ class _LanguagePickerSheet extends ConsumerWidget {
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () { HapticService.light(); Navigator.pop(context); },
               ),
             ],
           ),
@@ -384,6 +393,7 @@ class _LanguagePickerSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
         ],
+      ),
       ),
     );
   }

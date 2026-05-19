@@ -99,7 +99,11 @@ class _CreateOrderSheetState extends ConsumerState<CreateOrderSheet> {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) HapticService.medium();
+      },
+      child: Padding(
       padding: EdgeInsets.only(bottom: bottom),
       child: SizedBox(
         height: (screenHeight * 0.9 - bottom).clamp(200.0, screenHeight),
@@ -258,6 +262,7 @@ class _CreateOrderSheetState extends ConsumerState<CreateOrderSheet> {
           ),
         ),
         ),
+      ),
       ),
     );
   }
