@@ -310,7 +310,11 @@ class _ThemeSwitcherRow extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => Padding(
+      builder: (_) => PopScope(
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) HapticService.medium();
+        },
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -336,6 +340,7 @@ class _ThemeSwitcherRow extends StatelessWidget {
             _themeOption(context, Icons.brightness_auto_outlined, l10n.themeSystem,
                 current == ThemeMode.system, ThemeMode.system),
           ],
+        ),
         ),
       ),
     );
@@ -393,7 +398,11 @@ class _LanguageRow extends StatelessWidget {
       context: context,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => PopScope(
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) HapticService.medium();
+        },
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -424,6 +433,7 @@ class _LanguageRow extends StatelessWidget {
               ),
             const SizedBox(height: 8),
           ],
+        ),
         ),
       ),
     );

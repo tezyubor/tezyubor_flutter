@@ -426,7 +426,11 @@ class _ClientFilterSheetState extends State<_ClientFilterSheet> {
     final l10n = context.l10n;
     final theme = Theme.of(context);
 
-    return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) HapticService.medium();
+      },
+      child: Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -459,7 +463,7 @@ class _ClientFilterSheetState extends State<_ClientFilterSheet> {
                     style: const TextStyle(color: AppColors.primary)),
               ),
               GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: () { HapticService.light(); Navigator.pop(context); },
                 child: Container(
                   width: 32,
                   height: 32,
@@ -502,10 +506,7 @@ class _ClientFilterSheetState extends State<_ClientFilterSheet> {
               if (_dateFrom != null || _dateTo != null)
                 IconButton(
                   icon: const Icon(Icons.clear, size: 18),
-                  onPressed: () => setState(() {
-                    _dateFrom = null;
-                    _dateTo = null;
-                  }),
+                  onPressed: () { HapticService.light(); setState(() { _dateFrom = null; _dateTo = null; }); },
                 ),
             ],
           ),
@@ -532,6 +533,7 @@ class _ClientFilterSheetState extends State<_ClientFilterSheet> {
           ),
           const SizedBox(height: 24),
         ],
+      ),
       ),
     );
   }

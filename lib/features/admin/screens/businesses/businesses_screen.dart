@@ -258,7 +258,11 @@ class _BusinessFilterSheetState extends State<_BusinessFilterSheet> {
     final l10n = context.l10n;
     final theme = Theme.of(context);
 
-    return Padding(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) HapticService.medium();
+      },
+      child: Padding(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -310,7 +314,7 @@ class _BusinessFilterSheetState extends State<_BusinessFilterSheet> {
                     style: const TextStyle(color: AppColors.primary)),
               ),
               GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: () { HapticService.light(); Navigator.pop(context); },
                 child: Container(
                   width: 32,
                   height: 32,
@@ -415,6 +419,7 @@ class _BusinessFilterSheetState extends State<_BusinessFilterSheet> {
           ),
           const SizedBox(height: 24),
         ],
+      ),
       ),
     );
   }

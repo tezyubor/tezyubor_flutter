@@ -29,14 +29,16 @@ class StatusTabBar extends StatefulWidget implements PreferredSizeWidget {
 class _StatusTabBarState extends State<StatusTabBar> {
   late final List<GlobalKey> _keys;
   final _scrollCtrl = ScrollController();
-  int _lastIndex = 0;
+  bool _isProgrammaticChange = false;
+  int _lastSettledIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _keys = List.generate(widget.statuses.length, (_) => GlobalKey());
-    _lastIndex = widget.controller.index;
+    _lastSettledIndex = widget.controller.index;
     widget.controller.animation!.addListener(_onAnimChange);
+    widget.controller.addListener(_onControllerChange);
   }
 
   @override
@@ -44,15 +46,30 @@ class _StatusTabBarState extends State<StatusTabBar> {
     super.didUpdateWidget(old);
     if (old.controller != widget.controller) {
       old.controller.animation!.removeListener(_onAnimChange);
+      old.controller.removeListener(_onControllerChange);
       widget.controller.animation!.addListener(_onAnimChange);
+      widget.controller.addListener(_onControllerChange);
     }
   }
 
   @override
   void dispose() {
     widget.controller.animation!.removeListener(_onAnimChange);
+    widget.controller.removeListener(_onControllerChange);
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  // Fires when swipe fully settles on a new index (not for programmatic animateTo).
+  void _onControllerChange() {
+    if (!widget.controller.indexIsChanging) {
+      final idx = widget.controller.index;
+      if (idx != _lastSettledIndex) {
+        if (!_isProgrammaticChange) HapticService.selection();
+        _lastSettledIndex = idx;
+        _isProgrammaticChange = false;
+      }
+    }
   }
 
   // Returns the scroll offset that centers chip [i] in the viewport.
@@ -81,10 +98,6 @@ class _StatusTabBarState extends State<StatusTabBar> {
     final hi = val.ceil().clamp(0, widget.statuses.length - 1);
 
     if (lo == hi) {
-      if (lo != _lastIndex) {
-        _lastIndex = lo;
-        HapticService.selection();
-      }
       final off = _chipCenterOffset(lo);
       if (off != null) _scrollCtrl.jumpTo(off);
       return;
@@ -143,7 +156,11 @@ class _StatusTabBarState extends State<StatusTabBar> {
               return KeyedSubtree(
                 key: _keys[i],
                 child: GestureDetector(
-                  onTap: () { HapticService.selection(); widget.controller.animateTo(i); },
+                  onTap: () {
+                    _isProgrammaticChange = true;
+                    HapticService.selection();
+                    widget.controller.animateTo(i);
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(

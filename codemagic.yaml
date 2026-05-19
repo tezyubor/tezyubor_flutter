@@ -36,6 +36,9 @@ workflows:
       - name: Get Flutter packages
         script: flutter pub get
 
+      - name: Disable Swift Package Manager
+        script: flutter config --no-enable-swift-package-manager
+
       - name: Install CocoaPods dependencies
         script: |
           cd ios
