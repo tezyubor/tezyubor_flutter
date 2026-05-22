@@ -50,6 +50,12 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
   bool _showSuggestions = false;
   Timer? _debounce;
 
+  // Retained to prevent iOS GC from deallocating the native session
+  // before the async callback fires (ARC + Dart GC race).
+  SuggestSession? _suggestSession;
+  SearchSession? _geocodeSession;
+  SearchSession? _searchSession;
+
   @override
   void initState() {
     super.initState();
@@ -91,6 +97,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
         zoom: 18,
         searchOptions: const SearchOptions(searchType: SearchType.geo),
       );
+      _geocodeSession = sessionPair.$1;
       final result = await sessionPair.$2;
       final items = result.items;
       if (items != null && items.isNotEmpty && mounted) {
@@ -126,6 +133,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
           userPosition: Point(latitude: 41.2995, longitude: 69.2401),
         ),
       );
+      _suggestSession = sessionPair.$1;
       final result = await sessionPair.$2;
       if (mounted) {
         setState(() {
@@ -171,6 +179,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
           resultPageSize: 1,
         ),
       );
+      _searchSession = sessionPair.$1;
       final result = await sessionPair.$2;
       final items = result.items;
       if (items != null && items.isNotEmpty) {
