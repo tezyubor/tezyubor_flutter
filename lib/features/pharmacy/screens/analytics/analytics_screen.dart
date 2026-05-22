@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_l10n.dart';
 import '../../../../shared/widgets/loading_overlay.dart';
 import '../../../../shared/widgets/status_badge.dart';
+import '../../../../core/services/haptic_service.dart';
 import '../../providers/analytics_provider.dart';
 
 class AnalyticsScreen extends ConsumerWidget {
@@ -30,8 +31,10 @@ class AnalyticsScreen extends ConsumerWidget {
               : data == null
                   ? const SizedBox()
                   : RefreshIndicator(
-                      onRefresh: () =>
-                          ref.read(analyticsProvider.notifier).load(),
+                      onRefresh: () async {
+                        HapticService.medium();
+                        await ref.read(analyticsProvider.notifier).load();
+                      },
                       color: AppColors.primary,
                       child: ListView(
                         padding: const EdgeInsets.all(16),

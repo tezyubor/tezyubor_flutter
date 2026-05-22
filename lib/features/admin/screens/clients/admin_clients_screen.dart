@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -19,47 +21,39 @@ class AdminClientsScreen extends ConsumerStatefulWidget {
 
 class _AdminClientsScreenState extends ConsumerState<AdminClientsScreen> {
   final _searchController = TextEditingController();
-  final _searchFocus = FocusNode();
   bool _searchVisible = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(_onSearchChanged);
-  }
+  Timer? _debounce;
 
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchChanged);
+    _debounce?.cancel();
     _searchController.dispose();
-    _searchFocus.dispose();
     super.dispose();
   }
 
-  void _onSearchChanged() {
-    final text = _searchController.text.trim();
-    final current = ref.read(adminClientsProvider).filter;
-    if (text.length >= 2 || text.isEmpty) {
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      final current = ref.read(adminClientsProvider).filter;
       ref.read(adminClientsProvider.notifier).applyFilter(
             current.copyWith(
-              search: text.isEmpty ? null : text,
-              clearSearch: text.isEmpty,
+              search: value.isEmpty ? null : value,
+              clearSearch: value.isEmpty,
             ),
           );
-    }
+    });
   }
 
   void _toggleSearch() {
     HapticService.light();
     setState(() => _searchVisible = !_searchVisible);
-    if (_searchVisible) {
-      Future.delayed(const Duration(milliseconds: 80),
-          () => _searchFocus.requestFocus());
-    } else {
-      _searchFocus.unfocus();
-      if (_searchController.text.isNotEmpty) {
-        _searchController.clear();
-      }
+    if (!_searchVisible) {
+      _debounce?.cancel();
+      _searchController.clear();
+      final current = ref.read(adminClientsProvider).filter;
+      ref.read(adminClientsProvider.notifier).applyFilter(
+            current.copyWith(search: null, clearSearch: true),
+          );
     }
   }
 
@@ -74,9 +68,14 @@ class _AdminClientsScreenState extends ConsumerState<AdminClientsScreen> {
   void _openFilterSheet() {
     HapticService.light();
     final current = ref.read(adminClientsProvider).filter;
-    pushRightPanel(
-      context,
-      _ClientFilterPage(
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _ClientFilterSheet(
         initial: current,
         onApply: (f) {
           final withSearch = f.copyWith(search: current.search);
@@ -101,26 +100,10 @@ class _AdminClientsScreenState extends ConsumerState<AdminClientsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: _searchVisible
-            ? TextField(
-                controller: _searchController,
-                focusNode: _searchFocus,
-                decoration: InputDecoration(
-                  hintText: l10n.adminSearchClients,
-                  border: InputBorder.none,
-                  hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.5),
-                      ),
-                ),
-                style: Theme.of(context).textTheme.bodyMedium,
-              )
-            : Text(l10n.adminClientsTitle),
+        title: Text(l10n.adminClientsTitle),
         actions: [
           IconButton(
-            icon: Icon(_searchVisible ? Icons.close : Icons.search),
+            icon: Icon(_searchVisible ? Icons.search_off : Icons.search),
             tooltip: l10n.adminSearchClients,
             onPressed: _toggleSearch,
           ),
@@ -129,12 +112,43 @@ class _AdminClientsScreenState extends ConsumerState<AdminClientsScreen> {
             label: Text('$filterCount'),
             backgroundColor: AppColors.primary,
             child: IconButton(
-              icon: const Icon(Icons.filter_list_rounded),
+              icon: const Icon(Icons.tune_outlined),
               onPressed: _openFilterSheet,
             ),
           ),
           const SizedBox(width: 4),
         ],
+        bottom: _searchVisible
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(56),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: l10n.adminSearchClients,
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      isDense: true,
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {});
+                                _onSearchChanged('');
+                              },
+                            )
+                          : null,
+                    ),
+                    onChanged: (v) {
+                      setState(() {});
+                      _onSearchChanged(v);
+                    },
+                  ),
+                ),
+              )
+            : null,
       ),
       body: state.isLoading && state.clients.isEmpty
           ? const CenteredLoader()
@@ -372,24 +386,24 @@ class _ClientDetailPage extends StatelessWidget {
   }
 }
 
-// ─── Filter Page ──────────────────────────────────────────────────────────────
+// ─── Filter Sheet ─────────────────────────────────────────────────────────────
 
-class _ClientFilterPage extends StatefulWidget {
+class _ClientFilterSheet extends StatefulWidget {
   final AdminClientsFilter initial;
   final ValueChanged<AdminClientsFilter> onApply;
   final VoidCallback onClear;
 
-  const _ClientFilterPage({
+  const _ClientFilterSheet({
     required this.initial,
     required this.onApply,
     required this.onClear,
   });
 
   @override
-  State<_ClientFilterPage> createState() => _ClientFilterPageState();
+  State<_ClientFilterSheet> createState() => _ClientFilterSheetState();
 }
 
-class _ClientFilterPageState extends State<_ClientFilterPage> {
+class _ClientFilterSheetState extends State<_ClientFilterSheet> {
   late DateTime? _dateFrom;
   late DateTime? _dateTo;
   final _minOrdersController = TextEditingController();
@@ -399,8 +413,7 @@ class _ClientFilterPageState extends State<_ClientFilterPage> {
     super.initState();
     _dateFrom = widget.initial.dateFrom;
     _dateTo = widget.initial.dateTo;
-    _minOrdersController.text =
-        widget.initial.minOrders?.toString() ?? '';
+    _minOrdersController.text = widget.initial.minOrders?.toString() ?? '';
   }
 
   @override
@@ -429,59 +442,73 @@ class _ClientFilterPageState extends State<_ClientFilterPage> {
     if (picked != null) setState(() => isFrom ? _dateFrom = picked : _dateTo = picked);
   }
 
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final mutedFg = theme.colorScheme.onSurface.withValues(alpha: 0.6);
 
-    return SwipeToDismiss(
-      child: Scaffold(
-        appBar: AppBar(
-          leading: const PanelBackButton(),
-          title: Text(l10n.filter),
-          actions: [
-            if (_activeCount > 0)
-              TextButton(
-                onPressed: () {
-                  HapticService.light();
-                  widget.onClear();
-                  Navigator.pop(context);
-                },
-                child: Text(l10n.clear,
-                    style: const TextStyle(color: AppColors.primary)),
-              ),
-          ],
-        ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: SizedBox(
-              height: 52,
-              child: FilledButton(
-                onPressed: () {
-                  HapticService.light();
-                  final minOrders =
-                      int.tryParse(_minOrdersController.text.trim());
-                  widget.onApply(AdminClientsFilter(
-                    dateFrom: _dateFrom,
-                    dateTo: _dateTo,
-                    minOrders: minOrders,
-                  ));
-                  Navigator.pop(context);
-                },
-                child: Text(l10n.apply),
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) HapticService.medium();
+      },
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+            20, 0, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 48,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          children: [
+            Row(
+              children: [
+                Text(l10n.filter,
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+                if (_activeCount > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: Text('$_activeCount',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ],
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    HapticService.light();
+                    widget.onClear();
+                    Navigator.pop(context);
+                  },
+                  child: Text(l10n.clear),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Text(
-              '${l10n.from} — ${l10n.to}',
-              style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+              '${l10n.from} — ${l10n.to}'.toUpperCase(),
+              style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.8,
+                  color: mutedFg),
             ),
             const SizedBox(height: 8),
             Row(
@@ -491,9 +518,7 @@ class _ClientFilterPageState extends State<_ClientFilterPage> {
                     label: _dateFrom != null ? l10n.fmtDateDt(_dateFrom!) : l10n.from,
                     isSet: _dateFrom != null,
                     onTap: () => _pickDate(true),
-                    onClear: _dateFrom != null
-                        ? () => setState(() => _dateFrom = null)
-                        : null,
+                    onClear: _dateFrom != null ? () => setState(() => _dateFrom = null) : null,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -502,18 +527,19 @@ class _ClientFilterPageState extends State<_ClientFilterPage> {
                     label: _dateTo != null ? l10n.fmtDateDt(_dateTo!) : l10n.to,
                     isSet: _dateTo != null,
                     onTap: () => _pickDate(false),
-                    onClear: _dateTo != null
-                        ? () => setState(() => _dateTo = null)
-                        : null,
+                    onClear: _dateTo != null ? () => setState(() => _dateTo = null) : null,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
-              l10n.adminMinOrders,
-              style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+              l10n.adminMinOrders.toUpperCase(),
+              style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.8,
+                  color: mutedFg),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -526,12 +552,33 @@ class _ClientFilterPageState extends State<_ClientFilterPage> {
                 suffixIcon: _minOrdersController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear, size: 16),
-                        onPressed: () =>
-                            setState(() => _minOrdersController.clear()),
+                        onPressed: () => setState(() => _minOrdersController.clear()),
                       )
                     : null,
               ),
               onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () {
+                  HapticService.light();
+                  final minOrders = int.tryParse(_minOrdersController.text.trim());
+                  widget.onApply(AdminClientsFilter(
+                    dateFrom: _dateFrom,
+                    dateTo: _dateTo,
+                    minOrders: minOrders,
+                  ));
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Text(l10n.apply),
+              ),
             ),
           ],
         ),

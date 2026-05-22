@@ -34,8 +34,10 @@ class SettingsScreen extends ConsumerWidget {
       body: profileState.isLoading && profile == null
           ? const CenteredLoader()
           : RefreshIndicator(
-              onRefresh: () =>
-                  ref.read(pharmacyProfileProvider.notifier).load(),
+              onRefresh: () async {
+                HapticService.medium();
+                await ref.read(pharmacyProfileProvider.notifier).load();
+              },
               color: AppColors.primary,
               child: ListView(
               padding: const EdgeInsets.all(16),
