@@ -31,12 +31,14 @@ class _StatusTabBarState extends State<StatusTabBar> {
   final _scrollCtrl = ScrollController();
   bool _isProgrammaticChange = false;
   int _lastSettledIndex = 0;
+  int _lastHapticIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _keys = List.generate(widget.statuses.length, (_) => GlobalKey());
     _lastSettledIndex = widget.controller.index;
+    _lastHapticIndex = widget.controller.index;
     widget.controller.animation!.addListener(_onAnimChange);
     widget.controller.addListener(_onControllerChange);
   }
@@ -65,8 +67,8 @@ class _StatusTabBarState extends State<StatusTabBar> {
     if (!widget.controller.indexIsChanging) {
       final idx = widget.controller.index;
       if (idx != _lastSettledIndex) {
-        if (!_isProgrammaticChange) HapticService.selection();
         _lastSettledIndex = idx;
+        _lastHapticIndex = idx;
         _isProgrammaticChange = false;
       }
     }
@@ -96,6 +98,15 @@ class _StatusTabBarState extends State<StatusTabBar> {
     final val = widget.controller.animation!.value;
     final lo = val.floor().clamp(0, widget.statuses.length - 1);
     final hi = val.ceil().clamp(0, widget.statuses.length - 1);
+
+    // Fire haptic the moment swipe crosses the midpoint — not after animation ends.
+    if (lo != hi && !_isProgrammaticChange) {
+      final dominant = (val - lo) >= 0.5 ? hi : lo;
+      if (dominant != _lastHapticIndex) {
+        _lastHapticIndex = dominant;
+        HapticService.selection();
+      }
+    }
 
     if (lo == hi) {
       final off = _chipCenterOffset(lo);
